@@ -1,143 +1,762 @@
-<!DOCTYPE html><html lang="ru">
+<!DOCTYPE html>
+<html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ESP Skeleton (Webcam Demo)</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #0b0f14;
-      color: white;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }h1 {
-  font-size: 18px;
-  margin: 12px;
-  text-align: center;
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ESP VISION — AI Skeleton via OpenRouter</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
+
+:root {
+  --bg:      #04080c;
+  --bg2:     #070d14;
+  --border:  #0d2030;
+  --accent:  #00f0ff;
+  --accent2: #00ff9d;
+  --accent3: #ff2d6f;
+  --accent4: #ffa500;
+  --dim:     #122535;
+  --text:    #90c8d8;
+  --text2:   #3a7080;
+  --glow:    0 0 14px #00f0ff55;
 }
 
-.wrap {
-  position: relative;
-  width: 640px;
-  height: 480px;
-  max-width: 100%;
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Share Tech Mono', monospace;
+  min-height: 100vh;
+  overflow: hidden;
 }
 
-video, canvas {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  border-radius: 12px;
+body::before {
+  content:'';
+  position:fixed; inset:0;
+  background: repeating-linear-gradient(0deg,
+    transparent, transparent 2px,
+    rgba(0,240,255,0.012) 2px, rgba(0,240,255,0.012) 4px);
+  pointer-events:none; z-index:9000;
 }
 
-.note {
-  font-size: 12px;
-  opacity: 0.7;
-  margin: 10px;
-  text-align: center;
-  max-width: 600px;
+body::after {
+  content:'';
+  position:fixed; inset:0;
+  background: radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,0.65) 100%);
+  pointer-events:none; z-index:8999;
 }
 
-button {
-  margin: 10px;
-  padding: 10px 16px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  background: #2b6cff;
-  color: white;
+/* ── HEADER ── */
+.header {
+  height: 52px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(0,240,255,0.05) 0%, transparent 100%);
+  position: relative; z-index: 100;
+}
+.logo { display:flex; align-items:center; gap:12px; }
+.logo-mark {
+  width:28px; height:28px;
+  border: 1.5px solid var(--accent);
+  display:flex; align-items:center; justify-content:center;
+  clip-path:polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%);
+  box-shadow:var(--glow); font-size:0.9rem;
+}
+.logo-name {
+  font-family:'Orbitron',sans-serif; font-weight:900;
+  font-size:1rem; letter-spacing:0.3em;
+  color:var(--accent); text-shadow:var(--glow);
+}
+.logo-sub { font-size:0.55rem; letter-spacing:0.2em; color:var(--text2); margin-top:1px; }
+.hdr-right { display:flex; align-items:center; gap:16px; }
+.stat-pill {
+  display:flex; align-items:center; gap:6px;
+  padding:4px 10px; border:1px solid var(--border);
+  clip-path:polygon(4px 0%,100% 0%,calc(100% - 4px) 100%,0% 100%);
+  font-size:0.62rem; letter-spacing:0.08em; color:var(--text2);
+}
+.stat-pill strong { color:var(--accent); font-size:0.78rem; }
+.live-badge { display:flex; align-items:center; gap:6px; font-size:0.62rem; letter-spacing:0.18em; color:var(--text2); }
+.live-dot { width:7px; height:7px; border-radius:50%; background:var(--dim); transition:all 0.4s; }
+.live-dot.on { background:var(--accent2); box-shadow:0 0 10px var(--accent2); animation:blink 2s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+/* ── LAYOUT ── */
+.layout {
+  display:grid; grid-template-columns:1fr 270px;
+  height: calc(100vh - 52px);
 }
 
-  </style>
+/* ── VIDEO ZONE ── */
+.video-zone { position:relative; background:#000; overflow:hidden; }
+#video { width:100%; height:100%; object-fit:cover; transform:scaleX(-1); display:block; opacity:0; transition:opacity 0.5s; }
+#video.on { opacity:1; }
+#canvas { position:absolute; inset:0; width:100%; height:100%; transform:scaleX(-1); pointer-events:none; }
+
+.hud-c { position:absolute; width:22px; height:22px; pointer-events:none; z-index:10; }
+.hud-tl { top:10px; left:10px;   border-top:2px solid var(--accent); border-left:2px solid var(--accent); }
+.hud-tr { top:10px; right:10px;  border-top:2px solid var(--accent); border-right:2px solid var(--accent); }
+.hud-bl { bottom:10px; left:10px;  border-bottom:2px solid var(--accent); border-left:2px solid var(--accent); }
+.hud-br { bottom:10px; right:10px; border-bottom:2px solid var(--accent); border-right:2px solid var(--accent); }
+
+.hud-txt {
+  position:absolute; font-size:0.55rem; letter-spacing:0.13em;
+  color:rgba(0,240,255,0.4); pointer-events:none; z-index:10;
+}
+.ht-tl { top:38px; left:10px; }
+.ht-tr { top:38px; right:10px; text-align:right; }
+.ht-bl { bottom:38px; left:10px; }
+.ht-br { bottom:38px; right:10px; text-align:right; }
+
+.proc-flash { position:absolute; inset:0; background:rgba(0,240,255,0.055); opacity:0; pointer-events:none; z-index:5; transition:opacity 0.1s; }
+.proc-flash.on { opacity:1; }
+
+/* ── WELCOME ── */
+.welcome {
+  position:absolute; inset:0;
+  background:radial-gradient(ellipse at 50% 40%, #081825 0%, #04080c 65%);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px;
+  z-index:20; transition:opacity 0.5s;
+}
+.welcome.gone { opacity:0; pointer-events:none; }
+
+.w-icon { position:relative; width:96px; height:96px; }
+.w-icon svg { width:100%; height:100%; }
+.w-ring  { position:absolute; inset:-14px; border:1px solid rgba(0,240,255,0.2); border-radius:50%; animation:rot 12s linear infinite; }
+.w-ring2 { position:absolute; inset:-26px; border:1px dashed rgba(0,240,255,0.1); border-radius:50%; animation:rot 22s linear infinite reverse; }
+@keyframes rot { from{transform:rotate(0)} to{transform:rotate(360deg)} }
+
+.w-title {
+  font-family:'Orbitron',sans-serif; font-weight:900; font-size:1.75rem;
+  letter-spacing:0.4em; color:var(--accent);
+  text-shadow:0 0 40px var(--accent), 0 0 80px rgba(0,240,255,0.2);
+  text-align:center;
+}
+.w-sub { font-size:0.68rem; letter-spacing:0.18em; color:var(--text2); text-align:center; line-height:1.8; }
+
+.api-block { display:flex; flex-direction:column; gap:8px; width:350px; }
+.api-label { font-size:0.58rem; letter-spacing:0.18em; color:var(--text2); text-transform:uppercase; }
+.api-row { display:flex; }
+
+#api-key-input {
+  flex:1;
+  background:rgba(0,240,255,0.05);
+  border:1px solid var(--border); border-right:none;
+  color:var(--accent); font-family:'Share Tech Mono',monospace;
+  font-size:0.72rem; padding:10px 13px; outline:none;
+  clip-path:polygon(4px 0%,100% 0%,100% 100%,0% 100%);
+  transition:border-color 0.2s, background 0.2s;
+}
+#api-key-input:focus { border-color:rgba(0,240,255,0.4); background:rgba(0,240,255,0.09); }
+#api-key-input::placeholder { color:var(--text2); }
+
+.btn-launch {
+  font-family:'Orbitron',sans-serif; font-weight:700;
+  font-size:0.62rem; letter-spacing:0.18em; color:#000;
+  background:var(--accent); border:none; cursor:pointer;
+  padding:0 16px;
+  clip-path:polygon(0% 0%,calc(100% - 4px) 0%,100% 100%,4px 100%);
+  transition:all 0.2s; text-transform:uppercase;
+  box-shadow:0 0 20px rgba(0,240,255,0.35); white-space:nowrap;
+}
+.btn-launch:hover { background:#fff; box-shadow:0 0 40px rgba(0,240,255,0.7); }
+.btn-launch:disabled { opacity:0.4; cursor:not-allowed; }
+
+.warn-box {
+  display:flex; align-items:flex-start; gap:10px;
+  background:rgba(255,45,111,0.07); border:1px solid rgba(255,45,111,0.2);
+  padding:10px 14px; font-size:0.63rem; letter-spacing:0.05em;
+  color:#ff8aaa; line-height:1.7; width:350px;
+}
+
+/* ── LOADING ── */
+.loading {
+  position:absolute; inset:0; background:rgba(4,8,12,0.88);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px;
+  z-index:25; opacity:0; pointer-events:none; transition:opacity 0.3s;
+}
+.loading.on { opacity:1; pointer-events:all; }
+.spin-ring { width:48px; height:48px; border:1.5px solid var(--dim); border-top:1.5px solid var(--accent); border-radius:50%; animation:spin 0.9s linear infinite; }
+@keyframes spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
+.load-lbl { font-size:0.68rem; letter-spacing:0.22em; color:var(--accent); }
+
+.toast { position:absolute; bottom:56px; left:50%; transform:translateX(-50%); background:rgba(255,45,111,0.15); border:1px solid rgba(255,45,111,0.4); color:#ff8aaa; padding:9px 20px; font-size:0.68rem; letter-spacing:0.08em; white-space:nowrap; z-index:50; display:none; }
+
+/* ── SIDE ── */
+.side { background:var(--bg2); border-left:1px solid var(--border); display:flex; flex-direction:column; overflow-y:auto; }
+.side::-webkit-scrollbar { width:3px; }
+.side::-webkit-scrollbar-thumb { background:var(--dim); }
+
+.sec { border-bottom:1px solid var(--border); padding:13px 15px; }
+.sec-title { font-size:0.57rem; letter-spacing:0.22em; color:var(--accent); text-transform:uppercase; margin-bottom:11px; display:flex; align-items:center; gap:7px; }
+.sec-title::before { content:''; width:3px; height:11px; background:var(--accent); box-shadow:var(--glow); flex-shrink:0; }
+
+.api-stat { display:flex; align-items:center; gap:8px; padding:8px 10px; border:1px solid var(--border); font-size:0.62rem; letter-spacing:0.08em; color:var(--text2); margin-bottom:9px; }
+.asd { width:6px; height:6px; border-radius:50%; background:var(--dim); flex-shrink:0; transition:all 0.3s; }
+.asd.ok  { background:var(--accent2); box-shadow:0 0 8px var(--accent2); }
+.asd.err { background:var(--accent3); box-shadow:0 0 8px var(--accent3); }
+.asd.busy{ background:var(--accent4); box-shadow:0 0 8px var(--accent4); animation:blink 1s infinite; }
+
+.row2 { display:flex; justify-content:space-between; align-items:center; padding:5px 0; font-size:0.62rem; color:var(--text2); }
+.row2 span:last-child { color:var(--accent); font-size:0.82rem; }
+
+.model-btn {
+  display:block; width:100%;
+  background:rgba(0,240,255,0.04); border:1px solid var(--border);
+  color:var(--text2); font-family:'Share Tech Mono',monospace;
+  font-size:0.63rem; letter-spacing:0.04em;
+  padding:8px 10px; cursor:pointer; text-align:left; margin-bottom:5px;
+  clip-path:polygon(3px 0%,100% 0%,calc(100% - 3px) 100%,0% 100%);
+  transition:all 0.2s;
+}
+.model-btn:hover { border-color:rgba(0,240,255,0.3); color:var(--text); }
+.model-btn.sel { background:rgba(0,240,255,0.11); border-color:rgba(0,240,255,0.5); color:var(--accent); }
+.mbadge { float:right; font-size:0.48rem; letter-spacing:0.1em; padding:1px 5px; border:1px solid currentColor; clip-path:polygon(2px 0%,100% 0%,calc(100% - 2px) 100%,0% 100%); opacity:0.65; }
+
+.sl-row { margin-bottom:12px; }
+.sl-head { display:flex; justify-content:space-between; margin-bottom:5px; }
+.sl-name { font-size:0.68rem; color:var(--text); }
+.sl-val  { font-size:0.68rem; color:var(--accent); }
+
+input[type=range] { -webkit-appearance:none; width:100%; height:3px; background:var(--dim); outline:none; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:12px; height:12px; background:var(--accent); cursor:pointer; clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%); box-shadow:0 0 7px var(--accent); }
+
+.tog-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:9px; }
+.tog-label { font-size:0.7rem; color:var(--text); }
+.tog { width:33px; height:16px; background:var(--dim); border-radius:2px; position:relative; cursor:pointer; transition:background 0.3s; clip-path:polygon(3px 0%,100% 0%,calc(100% - 3px) 100%,0% 100%); }
+.tog.on { background:var(--accent); box-shadow:0 0 8px rgba(0,240,255,0.3); }
+.tog::after { content:''; position:absolute; top:2px; left:2px; width:12px; height:12px; background:rgba(0,0,0,0.65); transition:transform 0.3s; clip-path:polygon(2px 0%,100% 0%,calc(100% - 2px) 100%,0% 100%); }
+.tog.on::after { transform:translateX(17px); }
+
+.swatch-row { display:flex; gap:7px; flex-wrap:wrap; }
+.sw { width:19px; height:19px; cursor:pointer; clip-path:polygon(4px 0%,100% 0%,calc(100% - 4px) 100%,0% 100%); border:1px solid transparent; transition:transform 0.2s; }
+.sw:hover { transform:scale(1.2); }
+.sw.on { border-color:#fff; transform:scale(1.15); }
+
+.resp-box { background:rgba(0,0,0,0.4); border:1px solid var(--border); padding:9px; font-size:0.58rem; letter-spacing:0.04em; color:var(--text2); line-height:1.7; max-height:110px; overflow-y:auto; word-break:break-all; }
+.resp-box::-webkit-scrollbar { width:2px; }
+.resp-box::-webkit-scrollbar-thumb { background:var(--dim); }
+
+.kp-grid { display:grid; grid-template-columns:1fr 1fr; gap:3px 7px; }
+.kp-row  { display:flex; align-items:center; gap:5px; font-size:0.58rem; color:var(--text2); }
+.kp-d    { width:5px; height:5px; border-radius:50%; background:var(--dim); flex-shrink:0; transition:background 0.3s, box-shadow 0.3s; }
+.kp-d.on { background:var(--accent2); box-shadow:0 0 5px var(--accent2); }
+
+@media(max-width:680px){
+  .layout{ grid-template-columns:1fr; grid-template-rows:1fr 190px; }
+  .w-title{ font-size:1.2rem; }
+  .api-block,.warn-box{ width:90vw; }
+  .hdr-right .stat-pill{ display:none; }
+}
+</style>
 </head>
-<body><h1>ESP-скелет (как в играх, но через камеру)</h1><button onclick="startCamera()">Включить камеру</button>
+<body>
 
-<div class="wrap">
-  <video id="video" autoplay playsinline></video>
-  <canvas id="canvas"></canvas>
-</div><div class="note">
-  Демонстрация компьютерного зрения (pose estimation). 
-  Сайт не сохраняет видео и не отправляет данные.
-</div><script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"></script><script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter"></script><script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl"></script><script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection"></script><script>
-let detector, video, canvas, ctx;
+<header class="header">
+  <div class="logo">
+    <div class="logo-mark">⬡</div>
+    <div>
+      <div class="logo-name">ESP·VISION</div>
+      <div class="logo-sub">AI SKELETON · OPENROUTER</div>
+    </div>
+  </div>
+  <div class="hdr-right">
+    <div class="stat-pill">Запросов: <strong id="hdr-req">0</strong></div>
+    <div class="stat-pill">Задержка: <strong id="hdr-lat">--</strong> ms</div>
+    <div class="stat-pill">Суставов: <strong id="hdr-kp">0</strong>/17</div>
+    <div class="live-badge">
+      <div class="live-dot" id="live-dot"></div>
+      <span id="live-txt">OFFLINE</span>
+    </div>
+  </div>
+</header>
 
-async function initModel() {
-  const model = poseDetection.SupportedModels.MoveNet;
-  detector = await poseDetection.createDetector(model, {
-    modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING
+<div class="layout">
+
+  <div class="video-zone">
+    <div class="hud-c hud-tl"></div><div class="hud-c hud-tr"></div>
+    <div class="hud-c hud-bl"></div><div class="hud-c hud-br"></div>
+    <div class="hud-txt ht-tl" id="ht-tl">CAM_00 · IDLE</div>
+    <div class="hud-txt ht-tr" id="ht-tr">RES: --×--</div>
+    <div class="hud-txt ht-bl">AI POSE DETECTION</div>
+    <div class="hud-txt ht-br">LOCAL CAMERA · CLOUD AI</div>
+
+    <video id="video" autoplay muted playsinline></video>
+    <canvas id="canvas"></canvas>
+    <div class="proc-flash" id="proc-flash"></div>
+
+    <!-- WELCOME -->
+    <div class="welcome" id="welcome">
+      <div class="w-icon">
+        <div class="w-ring"></div><div class="w-ring2"></div>
+        <svg viewBox="0 0 100 100" fill="none">
+          <circle cx="50" cy="25" r="9" stroke="#00f0ff" stroke-width="2"/>
+          <line x1="50" y1="34" x2="50" y2="58" stroke="#00f0ff" stroke-width="2"/>
+          <line x1="32" y1="44" x2="68" y2="44" stroke="#00f0ff" stroke-width="2"/>
+          <line x1="50" y1="58" x2="38" y2="78" stroke="#00f0ff" stroke-width="2"/>
+          <line x1="50" y1="58" x2="62" y2="78" stroke="#00f0ff" stroke-width="2"/>
+          <circle cx="32" cy="44" r="3" fill="#00f0ff" opacity="0.6"/>
+          <circle cx="68" cy="44" r="3" fill="#00f0ff" opacity="0.6"/>
+          <circle cx="38" cy="78" r="3" fill="#00f0ff" opacity="0.6"/>
+          <circle cx="62" cy="78" r="3" fill="#00f0ff" opacity="0.6"/>
+        </svg>
+      </div>
+      <div>
+        <div class="w-title">ESP·VISION</div>
+        <div style="font-size:0.6rem;letter-spacing:0.22em;color:var(--text2);text-align:center;margin-top:3px">AI-POWERED SKELETON OVERLAY</div>
+      </div>
+      <div class="api-block">
+        <div class="api-label">🔑 OpenRouter API Key</div>
+        <div class="api-row">
+          <input type="password" id="api-key-input" placeholder="sk-or-v1-…" autocomplete="off" spellcheck="false"
+            onkeydown="if(event.key==='Enter')launch()">
+          <button class="btn-launch" id="btn-launch" onclick="launch()">ЗАПУСК</button>
+        </div>
+        <div style="font-size:0.57rem;letter-spacing:0.05em;color:var(--text2);line-height:1.6">
+          Ключ: <a href="https://openrouter.ai/keys" target="_blank" style="color:var(--accent);text-decoration:none">openrouter.ai/keys</a>
+          &nbsp;·&nbsp; Ключ хранится только в памяти вкладки
+        </div>
+      </div>
+      <div class="warn-box">
+        <span style="color:var(--accent3);flex-shrink:0;font-size:1rem">⚠</span>
+        <span>Камера используется <strong>локально</strong>. В OpenRouter отправляются только отдельные JPEG-кадры для анализа позы. Видео не записывается.</span>
+      </div>
+    </div>
+
+    <div class="loading" id="loading">
+      <div class="spin-ring"></div>
+      <div class="load-lbl" id="load-txt">ЗАПРОС КАМЕРЫ…</div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+  </div>
+
+  <!-- SIDE PANEL -->
+  <aside class="side">
+
+    <div class="sec">
+      <div class="sec-title">API Статус</div>
+      <div class="api-stat">
+        <div class="asd" id="api-dot"></div>
+        <span id="api-status-txt">Ожидание запуска</span>
+      </div>
+      <div class="row2"><span>Всего запросов</span><span id="req-cnt">0</span></div>
+      <div class="row2"><span>Последняя задержка</span><span id="lat-val">-- ms</span></div>
+      <div class="row2"><span>Найдено суставов</span><span id="kp-cnt">0 / 17</span></div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-title">Модель Vision</div>
+      <button class="model-btn sel" data-model="google/gemini-2.0-flash-001" onclick="selModel(this)">
+        Gemini 2.0 Flash<span class="mbadge">БЫСТРО</span>
+      </button>
+      <button class="model-btn" data-model="google/gemini-flash-1.5" onclick="selModel(this)">
+        Gemini 1.5 Flash<span class="mbadge">ЭКОНОМ</span>
+      </button>
+      <button class="model-btn" data-model="openai/gpt-4o-mini" onclick="selModel(this)">
+        GPT-4o Mini<span class="mbadge">ТОЧНО</span>
+      </button>
+      <button class="model-btn" data-model="anthropic/claude-3-haiku" onclick="selModel(this)">
+        Claude 3 Haiku<span class="mbadge">СТАБИЛЬНО</span>
+      </button>
+    </div>
+
+    <div class="sec">
+      <div class="sec-title">Настройки захвата</div>
+      <div class="sl-row">
+        <div class="sl-head"><span class="sl-name">Интервал запроса</span><span class="sl-val" id="v-interval">1500 ms</span></div>
+        <input type="range" min="500" max="6000" step="250" value="1500" id="sl-interval" oninput="updateInterval(this.value)">
+      </div>
+      <div class="sl-row">
+        <div class="sl-head"><span class="sl-name">Качество JPEG</span><span class="sl-val" id="v-quality">0.60</span></div>
+        <input type="range" min="0.2" max="1.0" step="0.05" value="0.6" id="sl-quality" oninput="jpegQuality=parseFloat(this.value);document.getElementById('v-quality').textContent=parseFloat(this.value).toFixed(2)">
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-title">Отображение</div>
+      <div class="tog-row"><span class="tog-label">Скелет (кости)</span><div class="tog on" id="tog-skel" onclick="togOpt('skel')"></div></div>
+      <div class="tog-row"><span class="tog-label">Точки суставов</span><div class="tog on" id="tog-pts"  onclick="togOpt('pts')"></div></div>
+      <div class="tog-row"><span class="tog-label">Свечение (glow)</span><div class="tog on" id="tog-glow" onclick="togOpt('glow')"></div></div>
+      <div class="tog-row"><span class="tog-label">Метки суставов</span><div class="tog"    id="tog-lbls" onclick="togOpt('lbls')"></div></div>
+      <div style="margin-top:6px">
+        <div class="sl-row">
+          <div class="sl-head"><span class="sl-name">Толщина линий</span><span class="sl-val" id="v-lw">2.5</span></div>
+          <input type="range" min="1" max="7" step="0.5" value="2.5" id="sl-lw" oninput="document.getElementById('v-lw').textContent=this.value">
+        </div>
+        <div class="sl-row">
+          <div class="sl-head"><span class="sl-name">Размер точек</span><span class="sl-val" id="v-ps">6</span></div>
+          <input type="range" min="3" max="14" step="1" value="6" id="sl-ps" oninput="document.getElementById('v-ps').textContent=this.value">
+        </div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-title">Цвет скелета</div>
+      <div class="swatch-row" id="swatches">
+        <div class="sw on" style="background:#00f0ff" data-c="#00f0ff" onclick="setSw(this)"></div>
+        <div class="sw"    style="background:#00ff9d" data-c="#00ff9d" onclick="setSw(this)"></div>
+        <div class="sw"    style="background:#ff2d6f" data-c="#ff2d6f" onclick="setSw(this)"></div>
+        <div class="sw"    style="background:#ffd700" data-c="#ffd700" onclick="setSw(this)"></div>
+        <div class="sw"    style="background:#bf88ff" data-c="#bf88ff" onclick="setSw(this)"></div>
+        <div class="sw"    style="background:#ff8c00" data-c="#ff8c00" onclick="setSw(this)"></div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-title">Ключевые точки</div>
+      <div class="kp-grid" id="kp-grid"></div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-title">Последний ответ AI</div>
+      <div class="resp-box" id="resp-box">Ожидание…</div>
+    </div>
+
+  </aside>
+</div>
+
+<script>
+// ── SKELETON DEFINITION ──────────────────────────────────
+const KP_NAMES = [
+  'nose','left_eye','right_eye','left_ear','right_ear',
+  'left_shoulder','right_shoulder','left_elbow','right_elbow',
+  'left_wrist','right_wrist','left_hip','right_hip',
+  'left_knee','right_knee','left_ankle','right_ankle'
+];
+const KP_RU = [
+  'Нос','Л.глаз','П.глаз','Л.ухо','П.ухо',
+  'Л.плечо','П.плечо','Л.локоть','П.локоть',
+  'Л.запясть','П.запясть','Л.бедро','П.бедро',
+  'Л.колено','П.колено','Л.лодыжка','П.лодыжка'
+];
+const BONES = [
+  [0,1],[0,2],[1,3],[2,4],
+  [5,6],[5,7],[7,9],[6,8],[8,10],
+  [5,11],[6,12],[11,12],
+  [11,13],[13,15],[12,14],[14,16]
+];
+
+// ── STATE ────────────────────────────────────────────────
+let apiKey = '';
+let model  = 'google/gemini-2.0-flash-001';
+let reqInterval = 1500;
+let jpegQuality  = 0.6;
+let skeletonColor = '#00f0ff';
+let opts = { skel:true, pts:true, glow:true, lbls:false };
+let reqCount = 0;
+let isBusy = false;
+let lastKps = null;
+let intervalId = null;
+
+// ── ELEMENTS ─────────────────────────────────────────────
+const video   = document.getElementById('video');
+const canvas  = document.getElementById('canvas');
+const ctx     = canvas.getContext('2d');
+const welcome = document.getElementById('welcome');
+const loading = document.getElementById('loading');
+const flash   = document.getElementById('proc-flash');
+const toastEl = document.getElementById('toast');
+
+// ── BUILD KP GRID ─────────────────────────────────────────
+(function(){
+  const g = document.getElementById('kp-grid');
+  KP_NAMES.forEach((n,i) => {
+    const d = document.createElement('div');
+    d.className = 'kp-row';
+    d.innerHTML = `<div class="kp-d" id="kpd-${n}"></div><span>${KP_RU[i]}</span>`;
+    g.appendChild(d);
   });
+})();
+
+// ── CONTROLS ──────────────────────────────────────────────
+function selModel(el) {
+  document.querySelectorAll('.model-btn').forEach(b => b.classList.remove('sel'));
+  el.classList.add('sel');
+  model = el.dataset.model;
+}
+function togOpt(k) {
+  opts[k] = !opts[k];
+  document.getElementById('tog-' + k).classList.toggle('on', opts[k]);
+}
+function updateInterval(v) {
+  reqInterval = parseInt(v);
+  document.getElementById('v-interval').textContent = v + ' ms';
+  if (intervalId) { clearInterval(intervalId); intervalId = setInterval(captureAndAnalyze, reqInterval); }
+}
+function setSw(el) {
+  document.querySelectorAll('.sw').forEach(s => s.classList.remove('on'));
+  el.classList.add('on');
+  skeletonColor = el.dataset.c;
 }
 
-async function startCamera() {
-  video = document.getElementById("video");
-  canvas = document.getElementById("canvas");
-  ctx = canvas.getContext("2d");
-
-  canvas.width = 640;
-  canvas.height = 480;
-
-  const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-  video.srcObject = stream;
-
-  await initModel();
-
-  detectPose();
+// ── TOAST ─────────────────────────────────────────────────
+function showToast(msg, dur=4500) {
+  toastEl.textContent = msg;
+  toastEl.style.display = 'block';
+  setTimeout(() => toastEl.style.display = 'none', dur);
 }
 
-function drawKeypoints(keypoints) {
-  for (const k of keypoints) {
-    if (k.score > 0.4) {
-      ctx.beginPath();
-      ctx.arc(k.x, k.y, 5, 0, 2 * Math.PI);
-      ctx.fillStyle = "#00ff99";
-      ctx.fill();
-    }
+// ── API STATUS ─────────────────────────────────────────────
+function setApiStatus(state, txt) {
+  const dot = document.getElementById('api-dot');
+  dot.className = 'asd ' + ({'ok':'ok','err':'err','busy':'busy'}[state] || '');
+  document.getElementById('api-status-txt').textContent = txt;
+}
+
+// ── LAUNCH ────────────────────────────────────────────────
+async function launch() {
+  apiKey = document.getElementById('api-key-input').value.trim();
+  if (!apiKey) { showToast('Введите API ключ OpenRouter!'); return; }
+
+  document.getElementById('btn-launch').disabled = true;
+  loading.classList.add('on');
+  document.getElementById('load-txt').textContent = 'ЗАПРОС КАМЕРЫ…';
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { width:{ideal:1280}, height:{ideal:720}, facingMode:'user' },
+      audio: false
+    });
+    video.srcObject = stream;
+    await new Promise(r => { video.onloadedmetadata = r; });
+    await video.play();
+
+    canvas.width  = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    document.getElementById('ht-tr').textContent = `RES: ${video.videoWidth}×${video.videoHeight}`;
+    document.getElementById('ht-tl').textContent = 'CAM_00 · LIVE ●';
+    loading.classList.remove('on');
+    welcome.classList.add('gone');
+    video.classList.add('on');
+    document.getElementById('live-dot').classList.add('on');
+    document.getElementById('live-txt').textContent = 'LIVE';
+    setApiStatus('ok', 'Готов к анализу');
+
+    renderLoop();
+    captureAndAnalyze();
+    intervalId = setInterval(captureAndAnalyze, reqInterval);
+
+  } catch(e) {
+    loading.classList.remove('on');
+    document.getElementById('btn-launch').disabled = false;
+    showToast(e.name === 'NotAllowedError' ? 'ДОСТУП К КАМЕРЕ ЗАПРЕЩЁН' : 'Ошибка: ' + (e.message || e.name));
   }
 }
 
-function drawSkeleton(keypoints) {
-  const pairs = [
-    [5,7],[7,9],
-    [6,8],[8,10],
-    [5,6],[5,11],[6,12],
-    [11,12],[11,13],[13,15],
-    [12,14],[14,16]
-  ];
-
-  ctx.strokeStyle = "#2b6cff";
-  ctx.lineWidth = 2;
-
-  for (const [a,b] of pairs) {
-    const p1 = keypoints[a];
-    const p2 = keypoints[b];
-
-    if (p1 && p2 && p1.score > 0.4 && p2.score > 0.4) {
-      ctx.beginPath();
-      ctx.moveTo(p1.x, p1.y);
-      ctx.lineTo(p2.x, p2.y);
-      ctx.stroke();
-    }
-  }
-}
-
-async function detectPose() {
-  if (!detector) return;
-
-  const poses = await detector.estimatePoses(video);
-
+// ── RENDER LOOP (smooth, 60fps) ────────────────────────────
+function renderLoop() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (lastKps) drawSkeleton(lastKps);
+  requestAnimationFrame(renderLoop);
+}
 
-  if (poses.length > 0) {
-    const kp = poses[0].keypoints;
-    drawSkeleton(kp);
-    drawKeypoints(kp);
+// ── CAPTURE FRAME (half res for API efficiency) ────────────
+function captureFrame() {
+  const oc = document.createElement('canvas');
+  oc.width  = Math.round(video.videoWidth  * 0.55);
+  oc.height = Math.round(video.videoHeight * 0.55);
+  const octx = oc.getContext('2d');
+  // Send non-mirrored to AI
+  octx.translate(oc.width, 0);
+  octx.scale(-1, 1);
+  octx.drawImage(video, 0, 0, oc.width, oc.height);
+  return oc.toDataURL('image/jpeg', jpegQuality).split(',')[1];
+}
+
+// ── PROMPT ────────────────────────────────────────────────
+const PROMPT = `You are a computer vision AI specialized in human pose estimation.
+Analyze this image and detect the human body skeleton.
+
+Return ONLY a valid JSON object — no markdown, no explanation, just raw JSON.
+
+If a human IS visible:
+{
+  "found": true,
+  "keypoints": {
+    "nose":           {"x": 0.50, "y": 0.10, "score": 0.95},
+    "left_eye":       {"x": 0.47, "y": 0.08, "score": 0.90},
+    "right_eye":      {"x": 0.53, "y": 0.08, "score": 0.90},
+    "left_ear":       {"x": 0.44, "y": 0.09, "score": 0.75},
+    "right_ear":      {"x": 0.56, "y": 0.09, "score": 0.75},
+    "left_shoulder":  {"x": 0.38, "y": 0.23, "score": 0.92},
+    "right_shoulder": {"x": 0.62, "y": 0.23, "score": 0.92},
+    "left_elbow":     {"x": 0.32, "y": 0.38, "score": 0.85},
+    "right_elbow":    {"x": 0.68, "y": 0.38, "score": 0.85},
+    "left_wrist":     {"x": 0.28, "y": 0.52, "score": 0.78},
+    "right_wrist":    {"x": 0.72, "y": 0.52, "score": 0.78},
+    "left_hip":       {"x": 0.42, "y": 0.56, "score": 0.88},
+    "right_hip":      {"x": 0.58, "y": 0.56, "score": 0.88},
+    "left_knee":      {"x": 0.40, "y": 0.73, "score": 0.82},
+    "right_knee":     {"x": 0.60, "y": 0.73, "score": 0.82},
+    "left_ankle":     {"x": 0.39, "y": 0.91, "score": 0.72},
+    "right_ankle":    {"x": 0.61, "y": 0.91, "score": 0.72}
+  }
+}
+
+Rules:
+- x and y are normalized 0.0–1.0 (x=0 is left edge, y=0 is top edge)
+- score is confidence 0.0–1.0 (use 0.1 for keypoints not visible)
+- Be precise — estimate positions even for partially visible body parts
+- If body part is outside frame or occluded, set score to 0.1
+
+If NO human is visible: {"found": false, "keypoints": {}}
+
+JSON only. No other text.`;
+
+// ── ANALYZE ───────────────────────────────────────────────
+async function captureAndAnalyze() {
+  if (isBusy) return;
+  isBusy = true;
+  setApiStatus('busy', 'Отправка кадра в AI…');
+
+  // Flash effect
+  flash.classList.add('on');
+  setTimeout(() => flash.classList.remove('on'), 130);
+
+  const t0 = performance.now();
+  const b64 = captureFrame();
+
+  try {
+    const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+        'HTTP-Referer': window.location.href,
+        'X-Title': 'ESP Vision Skeleton Demo'
+      },
+      body: JSON.stringify({
+        model: model,
+        max_tokens: 700,
+        temperature: 0.1,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${b64}` } },
+            { type: 'text', text: PROMPT }
+          ]
+        }]
+      })
+    });
+
+    const lat = Math.round(performance.now() - t0);
+    reqCount++;
+    document.getElementById('req-cnt').textContent  = reqCount;
+    document.getElementById('hdr-req').textContent  = reqCount;
+    document.getElementById('lat-val').textContent  = lat + ' ms';
+    document.getElementById('hdr-lat').textContent  = lat;
+
+    if (!resp.ok) {
+      const ed = await resp.json().catch(()=>({}));
+      throw new Error(ed.error?.message || `HTTP ${resp.status}`);
+    }
+
+    const data = await resp.json();
+    const raw  = data.choices?.[0]?.message?.content || '';
+    document.getElementById('resp-box').textContent = raw.slice(0, 400);
+
+    // Parse JSON
+    let parsed = null;
+    try {
+      const clean = raw.replace(/```json|```/g,'').trim();
+      parsed = JSON.parse(clean);
+    } catch {
+      const m = raw.match(/\{[\s\S]*\}/);
+      if (m) try { parsed = JSON.parse(m[0]); } catch {}
+    }
+
+    if (parsed?.found && parsed?.keypoints) {
+      const kps = KP_NAMES.map(n => {
+        const k = parsed.keypoints[n];
+        return k ? { name:n, x:k.x, y:k.y, score:k.score||0.8 } : { name:n, x:0, y:0, score:0 };
+      });
+      lastKps = kps;
+      const valid = kps.filter(k => k.score >= 0.3).length;
+      KP_NAMES.forEach(n => {
+        const el = document.getElementById('kpd-' + n);
+        if (el) el.classList.toggle('on', kps.find(k=>k.name===n)?.score >= 0.3);
+      });
+      document.getElementById('kp-cnt').textContent = `${valid} / 17`;
+      document.getElementById('hdr-kp').textContent = valid;
+      setApiStatus('ok', `${valid} суставов · ${lat} ms`);
+    } else {
+      lastKps = null;
+      KP_NAMES.forEach(n => { const el=document.getElementById('kpd-'+n); if(el) el.classList.remove('on'); });
+      document.getElementById('kp-cnt').textContent = '0 / 17';
+      document.getElementById('hdr-kp').textContent = '0';
+      setApiStatus('ok', 'Человек не обнаружен');
+    }
+
+  } catch(e) {
+    document.getElementById('resp-box').textContent = '⚠ ' + e.message;
+    setApiStatus('err', e.message.slice(0,45));
+    if (e.message.includes('401') || e.message.toLowerCase().includes('key')) {
+      showToast('Неверный ключ — проверьте OpenRouter API key');
+    }
   }
 
-  requestAnimationFrame(detectPose);
+  isBusy = false;
 }
-</script></body>
+
+// ── DRAW SKELETON ─────────────────────────────────────────
+function drawSkeleton(kps) {
+  const W   = canvas.width;
+  const H   = canvas.height;
+  const lw  = parseFloat(document.getElementById('sl-lw').value);
+  const ps  = parseInt(document.getElementById('sl-ps').value);
+  const clr = skeletonColor;
+
+  ctx.save();
+
+  if (opts.skel) {
+    BONES.forEach(([a,b]) => {
+      const kA=kps[a], kB=kps[b];
+      if (!kA||!kB||kA.score<0.3||kB.score<0.3) return;
+      const ax=kA.x*W, ay=kA.y*H, bx=kB.x*W, by=kB.y*H;
+
+      if (opts.glow) {
+        ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(bx,by);
+        ctx.strokeStyle=clr; ctx.lineWidth=lw+9; ctx.globalAlpha=0.07; ctx.lineCap='round'; ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(bx,by);
+        ctx.lineWidth=lw+3; ctx.globalAlpha=0.22; ctx.stroke();
+      }
+      ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(bx,by);
+      ctx.strokeStyle=clr; ctx.lineWidth=lw; ctx.globalAlpha=1; ctx.lineCap='round'; ctx.stroke();
+    });
+  }
+
+  if (opts.pts) {
+    kps.forEach(k => {
+      if (k.score < 0.3) return;
+      const x=k.x*W, y=k.y*H;
+      const isHead=['nose','left_eye','right_eye','left_ear','right_ear'].includes(k.name);
+      const ptClr = isHead ? '#ffffff' : clr;
+
+      if (opts.glow) {
+        ctx.beginPath(); ctx.arc(x,y,ps+8,0,Math.PI*2);
+        ctx.fillStyle=clr; ctx.globalAlpha=0.07; ctx.fill();
+        ctx.beginPath(); ctx.arc(x,y,ps+4,0,Math.PI*2);
+        ctx.globalAlpha=0.2; ctx.fill();
+      }
+      ctx.beginPath(); ctx.arc(x,y,ps,0,Math.PI*2);
+      ctx.fillStyle=ptClr; ctx.globalAlpha=1; ctx.fill();
+      ctx.beginPath(); ctx.arc(x,y,ps*0.4,0,Math.PI*2);
+      ctx.fillStyle='rgba(0,0,0,0.75)'; ctx.fill();
+
+      if (opts.lbls) {
+        ctx.font = `${Math.max(9,ps*1.4)}px "Share Tech Mono"`;
+        ctx.fillStyle=clr; ctx.globalAlpha=0.65;
+        ctx.fillText(k.name.replace(/_/g,' '), x+ps+3, y+4);
+      }
+    });
+  }
+
+  ctx.restore();
+}
+</script>
+</body>
 </html>
