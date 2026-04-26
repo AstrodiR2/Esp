@@ -1,1 +1,571 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ESP SKELETON — Pose Vision</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #020408;
+    --panel: #060d14;
+    --esp-green: #00ff88;
+    --esp-cyan: #00cfff;
+    --esp-red: #ff3355;
+    --esp-yellow: #ffdd00;
+    --border: rgba(0,207,255,0.15);
+    --glow: 0 0 12px rgba(0,255,136,0.6);
+  }
+
+  html, body { height: 100%; background: var(--bg); color: var(--esp-cyan); font-family: 'Share Tech Mono', monospace; overflow: hidden; }
+
+  body::after {
+    content: '';
+    position: fixed; inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.06) 2px, rgba(0,0,0,0.06) 4px);
+    pointer-events: none; z-index: 9999;
+  }
+
+  #app { display: flex; flex-direction: column; height: 100vh; }
+
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 20px; border-bottom: 1px solid var(--border);
+    background: var(--panel); flex-shrink: 0;
+  }
+  .logo { font-family: 'Orbitron', monospace; font-size: 1.1rem; font-weight: 900; letter-spacing: 4px; color: var(--esp-green); text-shadow: var(--glow); }
+  .logo span { color: var(--esp-cyan); }
+  .header-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+  .header-meta { font-size: 0.65rem; color: rgba(0,207,255,0.45); letter-spacing: 2px; text-align: right; line-height: 1.6; margin-left: 8px; }
+
+  #status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #333; margin-right: 6px; vertical-align: middle; transition: background 0.3s, box-shadow 0.3s; }
+  #status-dot.active  { background: var(--esp-green); box-shadow: var(--glow); animation: pulse 1.4s infinite; }
+  #status-dot.loading { background: var(--esp-yellow); box-shadow: 0 0 10px rgba(255,220,0,0.7); animation: pulse 0.6s infinite; }
+  #status-dot.error   { background: var(--esp-red); box-shadow: 0 0 10px rgba(255,51,85,0.7); }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  .tool-btn {
+    font-family: 'Share Tech Mono', monospace; font-size: 0.6rem; letter-spacing: 2px;
+    padding: 6px 12px; background: transparent; border: 1px solid var(--border);
+    color: rgba(0,207,255,0.6); cursor: pointer; transition: all 0.2s; white-space: nowrap;
+  }
+  .tool-btn:hover { border-color: var(--esp-cyan); color: var(--esp-cyan); }
+  .tool-btn.active { border-color: var(--esp-green); color: var(--esp-green); background: rgba(0,255,136,0.08); }
+
+  main { flex: 1; display: flex; overflow: hidden; }
+
+  #vision-area {
+    flex: 1; position: relative; display: flex; align-items: center; justify-content: center;
+    background: #000; overflow: hidden;
+  }
+
+  #video {
+    position: absolute; width: 100%; height: 100%; object-fit: cover;
+    opacity: 0; transition: opacity 0.5s, filter 0.4s; transform: scaleX(-1);
+  }
+  #video.visible   { opacity: 1; }
+  #video.dark-mode { filter: brightness(0.05) saturate(0); }
+
+  #canvas {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    pointer-events: none; transform: scaleX(-1);
+  }
+
+  .corner { position: absolute; width: 28px; height: 28px; border-color: var(--esp-cyan); border-style: solid; opacity: 0.6; z-index: 10; }
+  .corner.tl { top:12px;left:12px;border-width:2px 0 0 2px; }
+  .corner.tr { top:12px;right:12px;border-width:2px 2px 0 0; }
+  .corner.bl { bottom:12px;left:12px;border-width:0 0 2px 2px; }
+  .corner.br { bottom:12px;right:12px;border-width:0 2px 2px 0; }
+
+  /* Fullscreen overlay controls */
+  #fs-controls {
+    position: absolute; top: 14px; right: 14px; z-index: 30;
+    display: none; flex-direction: column; gap: 8px; align-items: flex-end;
+  }
+  #fs-controls.show { display: flex; }
+
+  .fs-btn {
+    width: 40px; height: 40px; background: rgba(0,0,0,0.75); cursor: pointer;
+    display: flex; align-items: center; justify-content: center; font-size: 1rem; transition: all 0.2s;
+  }
+  #btn-close-fs { border: 1px solid rgba(255,51,85,0.5); color: var(--esp-red); }
+  #btn-close-fs:hover { background: rgba(255,51,85,0.2); border-color: var(--esp-red); }
+  #btn-dark-fs  { border: 1px solid var(--border); color: rgba(0,207,255,0.6); }
+  #btn-dark-fs:hover { border-color: var(--esp-cyan); color: var(--esp-cyan); }
+  #btn-dark-fs.active { border-color: var(--esp-green); color: var(--esp-green); background: rgba(0,255,136,0.1); }
+
+  /* HUD in fullscreen */
+  #hud { position: absolute; bottom: 16px; left: 16px; z-index: 30; display: none; flex-direction: column; gap: 10px; }
+  #hud.show { display: flex; }
+  .hud-stat { font-size: 0.6rem; letter-spacing: 2px; color: rgba(0,255,136,0.5); }
+  .hud-stat span { color: var(--esp-green); font-size: 0.85rem; }
+
+  /* Splash */
+  #splash {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 28px; z-index: 20;
+    background: radial-gradient(ellipse at center, #041020 0%, #010509 100%); transition: opacity 0.6s;
+  }
+  #splash.hidden { opacity: 0; pointer-events: none; }
+
+  .splash-icon {
+    width: 90px; height: 90px; border: 2px solid var(--esp-cyan); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    animation: glow-pulse 3s ease-in-out infinite;
+  }
+  @keyframes glow-pulse { 0%,100%{box-shadow:0 0 10px rgba(0,207,255,0.3)} 50%{box-shadow:0 0 30px rgba(0,207,255,0.5),0 0 60px rgba(0,207,255,0.15)} }
+  .splash-icon svg { width: 44px; height: 44px; }
+  .splash-title { font-family:'Orbitron',monospace; font-size:2rem; font-weight:900; letter-spacing:6px; color:var(--esp-green); text-shadow:var(--glow),0 0 40px rgba(0,255,136,0.3); }
+  .splash-sub { font-size:0.7rem; letter-spacing:3px; color:rgba(0,207,255,0.5); max-width:320px; text-align:center; line-height:1.8; }
+
+  #btn-start {
+    font-family:'Orbitron',monospace; font-size:0.75rem; font-weight:700; letter-spacing:3px;
+    padding:14px 36px; background:transparent; border:1px solid var(--esp-green); color:var(--esp-green);
+    cursor:pointer; text-transform:uppercase; position:relative; overflow:hidden; transition:color 0.3s;
+  }
+  #btn-start::before { content:''; position:absolute; inset:0; background:var(--esp-green); transform:translateX(-100%); transition:transform 0.3s ease; z-index:-1; }
+  #btn-start:hover { color:#000; }
+  #btn-start:hover::before { transform:translateX(0); }
+  #btn-start:disabled { opacity:0.4; cursor:not-allowed; }
+
+  .privacy-note {
+    display:flex; align-items:center; gap:8px; font-size:0.6rem; color:rgba(0,207,255,0.4);
+    letter-spacing:1px; border:1px solid rgba(0,207,255,0.1); padding:8px 14px;
+    max-width:340px; text-align:center; line-height:1.7;
+  }
+  .privacy-note svg { flex-shrink:0; opacity:0.5; }
+
+  /* Sidebar */
+  #sidebar { width:220px; flex-shrink:0; background:var(--panel); border-left:1px solid var(--border); display:flex; flex-direction:column; overflow:hidden; transition:width 0.3s; }
+  #sidebar.hidden-fs { width:0; }
+
+  .panel-label { font-size:0.55rem; letter-spacing:3px; color:rgba(0,207,255,0.35); padding:10px 14px 6px; border-bottom:1px solid var(--border); text-transform:uppercase; }
+  #stats-panel { padding:12px 14px; border-bottom:1px solid var(--border); }
+  .stat-row { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px; }
+  .stat-label { font-size:0.6rem; color:rgba(0,207,255,0.4); letter-spacing:1px; }
+  .stat-val { font-size:0.85rem; color:var(--esp-green); font-weight:bold; }
+
+  #conf-panel { padding:10px 14px; flex:1; overflow-y:auto; }
+  #conf-panel::-webkit-scrollbar { width:3px; }
+  #conf-panel::-webkit-scrollbar-thumb { background:var(--border); }
+  .kp-row { margin-bottom:7px; }
+  .kp-name { font-size:0.55rem; color:rgba(0,207,255,0.45); letter-spacing:1px; margin-bottom:2px; display:flex; justify-content:space-between; }
+  .kp-bar-bg { height:3px; background:rgba(0,207,255,0.08); border-radius:2px; overflow:hidden; }
+  .kp-bar { height:100%; border-radius:2px; transition:width 0.15s; }
+
+  footer { padding:8px 20px; border-top:1px solid var(--border); font-size:0.55rem; color:rgba(0,207,255,0.25); letter-spacing:1px; display:flex; justify-content:space-between; flex-shrink:0; background:var(--panel); }
+
+  #loading-overlay { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; background:rgba(0,0,0,0.85); z-index:15; opacity:0; pointer-events:none; transition:opacity 0.3s; }
+  #loading-overlay.show { opacity:1; pointer-events:all; }
+  .spinner { width:48px; height:48px; border:2px solid rgba(0,207,255,0.1); border-top-color:var(--esp-cyan); border-radius:50%; animation:spin 0.8s linear infinite; }
+  @keyframes spin { to{transform:rotate(360deg)} }
+  .loading-text { font-size:0.65rem; letter-spacing:3px; color:var(--esp-cyan); animation:blink 1.2s step-end infinite; }
+  @keyframes blink { 50%{opacity:0} }
+
+  #error-msg { position:absolute; bottom:20px; left:50%; transform:translateX(-50%); background:rgba(255,51,85,0.12); border:1px solid rgba(255,51,85,0.4); color:var(--esp-red); font-size:0.65rem; letter-spacing:1px; padding:10px 20px; z-index:25; display:none; text-align:center; max-width:360px; }
+  #error-msg.show { display:block; }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="logo">ESP<span>.</span>SKELETON</div>
+    <div class="header-right">
+      <button class="tool-btn" id="btn-fullscreen" style="display:none">⛶ ПОЛНЫЙ ЭКРАН</button>
+      <button class="tool-btn" id="btn-darkmode" style="display:none">🌑 ТЁМНЫЙ РЕЖИМ</button>
+      <div class="header-meta">
+        <span id="status-dot"></span><span id="status-txt">OFFLINE</span><br>
+        POSE ESTIMATION v1.0
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div id="vision-area">
+      <div class="corner tl"></div>
+      <div class="corner tr"></div>
+      <div class="corner bl"></div>
+      <div class="corner br"></div>
+
+      <video id="video" autoplay muted playsinline></video>
+      <canvas id="canvas"></canvas>
+
+      <!-- Fullscreen floating controls -->
+      <div id="fs-controls">
+        <button class="fs-btn" id="btn-close-fs" title="Выйти">✕</button>
+        <button class="fs-btn" id="btn-dark-fs"  title="Тёмный режим">🌑</button>
+      </div>
+
+      <!-- HUD -->
+      <div id="hud">
+        <div class="hud-stat">FPS <span id="fps-hud">—</span></div>
+        <div class="hud-stat">ТОЧКИ <span id="kp-hud">—</span></div>
+      </div>
+
+      <!-- Splash -->
+      <div id="splash">
+        <div class="splash-icon">
+          <svg viewBox="0 0 44 44" fill="none" stroke="#00cfff" stroke-width="1.5">
+            <circle cx="22" cy="10" r="4"/>
+            <line x1="22" y1="14" x2="22" y2="26"/>
+            <line x1="22" y1="18" x2="14" y2="24"/>
+            <line x1="22" y1="18" x2="30" y2="24"/>
+            <line x1="22" y1="26" x2="16" y2="36"/>
+            <line x1="22" y1="26" x2="28" y2="36"/>
+          </svg>
+        </div>
+        <div class="splash-title">ESP SKELETON</div>
+        <div class="splash-sub">REAL-TIME POSE ESTIMATION<br>ЧЕРЕЗ КАМЕРУ УСТРОЙСТВА</div>
+        <button id="btn-start">▶ ВКЛЮЧИТЬ КАМЕРУ</button>
+        <div class="privacy-note">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M8 1L2 4v4c0 3.3 2.5 6.4 6 7 3.5-.6 6-3.7 6-7V4L8 1z"/>
+          </svg>
+          Камера используется только локально. Данные не отправляются на серверы и не сохраняются.
+        </div>
+      </div>
+
+      <div id="loading-overlay">
+        <div class="spinner"></div>
+        <div class="loading-text">ЗАГРУЗКА МОДЕЛИ...</div>
+      </div>
+
+      <div id="error-msg"></div>
+    </div>
+
+    <div id="sidebar">
+      <div class="panel-label">ДАННЫЕ // DATA</div>
+      <div id="stats-panel">
+        <div class="stat-row"><span class="stat-label">FPS</span><span class="stat-val" id="fps-val">—</span></div>
+        <div class="stat-row"><span class="stat-label">ТОЧКИ</span><span class="stat-val" id="kp-count">—</span></div>
+        <div class="stat-row"><span class="stat-label">МОДЕЛЬ</span><span class="stat-val" style="font-size:0.6rem;color:var(--esp-cyan)">MOVENET</span></div>
+      </div>
+      <div class="panel-label">СУСТАВЫ // JOINTS</div>
+      <div id="conf-panel"></div>
+    </div>
+  </main>
+
+  <footer>
+    <span>ESP SKELETON DEMO — ТОЛЬКО ДЛЯ ОБРАЗОВАТЕЛЬНЫХ ЦЕЛЕЙ</span>
+    <span>NO DATA TRANSMITTED</span>
+  </footer>
+</div>
+
+<script>
+(async () => {
+  const s1 = document.createElement('script');
+  s1.src = 'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js';
+  document.head.appendChild(s1);
+  await new Promise(r => s1.onload = r);
+
+  const s2 = document.createElement('script');
+  s2.src = 'https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection@2.1.3/dist/pose-detection.min.js';
+  document.head.appendChild(s2);
+  await new Promise(r => s2.onload = r);
+
+  init();
+})();
+
+function init() {
+  const video      = document.getElementById('video');
+  const canvas     = document.getElementById('canvas');
+  const ctx        = canvas.getContext('2d');
+  const splash     = document.getElementById('splash');
+  const loading    = document.getElementById('loading-overlay');
+  const btnStart   = document.getElementById('btn-start');
+  const statusDot  = document.getElementById('status-dot');
+  const statusTxt  = document.getElementById('status-txt');
+  const fpsVal     = document.getElementById('fps-val');
+  const kpCount    = document.getElementById('kp-count');
+  const errMsg     = document.getElementById('error-msg');
+  const confPanel  = document.getElementById('conf-panel');
+  const sidebar    = document.getElementById('sidebar');
+  const visionArea = document.getElementById('vision-area');
+  const btnFS      = document.getElementById('btn-fullscreen');
+  const btnDark    = document.getElementById('btn-darkmode');
+  const btnCloseFS = document.getElementById('btn-close-fs');
+  const btnDarkFS  = document.getElementById('btn-dark-fs');
+  const fsControls = document.getElementById('fs-controls');
+  const hud        = document.getElementById('hud');
+  const fpsHud     = document.getElementById('fps-hud');
+  const kpHud      = document.getElementById('kp-hud');
+  const appHeader  = document.querySelector('header');
+  const appFooter  = document.querySelector('footer');
+
+  let isFullscreen = false;
+  let isDark = false;
+
+  const KP_NAMES = {
+    nose:'НОС', left_eye:'ГЛАЗ Л', right_eye:'ГЛАЗ П',
+    left_ear:'УХО Л', right_ear:'УХО П',
+    left_shoulder:'ПЛЕЧО Л', right_shoulder:'ПЛЕЧО П',
+    left_elbow:'ЛОКОТЬ Л', right_elbow:'ЛОКОТЬ П',
+    left_wrist:'ЗАПЯСТЬЕ Л', right_wrist:'ЗАПЯСТЬЕ П',
+    left_hip:'БЕДРО Л', right_hip:'БЕДРО П',
+    left_knee:'КОЛЕНО Л', right_knee:'КОЛЕНО П',
+    left_ankle:'ЛОДЫЖКА Л', right_ankle:'ЛОДЫЖКА П',
+  };
+
+  // Body skeleton only (no face lines — head drawn as circle)
+  const SKELETON = [
+    ['left_shoulder','right_shoulder'],
+    ['left_shoulder','left_elbow'],  ['right_shoulder','right_elbow'],
+    ['left_elbow','left_wrist'],     ['right_elbow','right_wrist'],
+    ['left_shoulder','left_hip'],    ['right_shoulder','right_hip'],
+    ['left_hip','right_hip'],
+    ['left_hip','left_knee'],        ['right_hip','right_knee'],
+    ['left_knee','left_ankle'],      ['right_knee','right_ankle'],
+  ];
+
+  const HEAD_KPS = ['nose','left_eye','right_eye','left_ear','right_ear'];
+
+  function getColor(name, alpha=1) {
+    if (HEAD_KPS.includes(name)) return `rgba(0,207,255,${alpha})`;
+    if (name.includes('shoulder')||name.includes('elbow')||name.includes('wrist')) return `rgba(0,255,136,${alpha})`;
+    if (name.includes('hip')||name.includes('knee')||name.includes('ankle')) return `rgba(255,200,0,${alpha})`;
+    return `rgba(200,200,200,${alpha})`;
+  }
+
+  // Build sidebar
+  Object.keys(KP_NAMES).forEach(name => {
+    const row = document.createElement('div');
+    row.className = 'kp-row';
+    row.innerHTML = `
+      <div class="kp-name"><span>${KP_NAMES[name]}</span><span id="score-${name}">—</span></div>
+      <div class="kp-bar-bg"><div class="kp-bar" id="bar-${name}" style="width:0%;background:${getColor(name)}"></div></div>`;
+    confPanel.appendChild(row);
+  });
+
+  function setStatus(s, t) { statusDot.className = s; statusTxt.textContent = t; }
+  function showError(m) { errMsg.textContent = m; errMsg.classList.add('show'); setStatus('error','ОШИБКА'); }
+
+  // ── FULLSCREEN ──
+  function enterFS() {
+    isFullscreen = true;
+    visionArea.style.cssText = 'position:fixed;inset:0;z-index:1000;width:100vw;height:100vh;';
+    appHeader.style.display = 'none';
+    appFooter.style.display = 'none';
+    sidebar.classList.add('hidden-fs');
+    fsControls.classList.add('show');
+    hud.classList.add('show');
+    btnFS.classList.add('active');
+    btnFS.textContent = '✕ ВЫЙТИ';
+  }
+  function exitFS() {
+    isFullscreen = false;
+    visionArea.style.cssText = '';
+    appHeader.style.display = '';
+    appFooter.style.display = '';
+    sidebar.classList.remove('hidden-fs');
+    fsControls.classList.remove('show');
+    hud.classList.remove('show');
+    btnFS.classList.remove('active');
+    btnFS.textContent = '⛶ ПОЛНЫЙ ЭКРАН';
+  }
+
+  // ── DARK MODE ──
+  function setDark(on) {
+    isDark = on;
+    video.classList.toggle('dark-mode', on);
+    btnDark.classList.toggle('active', on);
+    btnDarkFS.classList.toggle('active', on);
+    btnDark.textContent   = on ? '☀️ СВЕТЛЫЙ РЕЖИМ' : '🌑 ТЁМНЫЙ РЕЖИМ';
+  }
+
+  btnFS.addEventListener('click', () => isFullscreen ? exitFS() : enterFS());
+  btnCloseFS.addEventListener('click', exitFS);
+  btnDark.addEventListener('click', () => setDark(!isDark));
+  btnDarkFS.addEventListener('click', () => setDark(!isDark));
+  document.addEventListener('keydown', e => { if (e.key==='Escape' && isFullscreen) exitFS(); });
+
+  let detector = null;
+  let lastTime = performance.now();
+  let frameCount = 0;
+
+  btnStart.addEventListener('click', async () => {
+    btnStart.disabled = true;
+    loading.classList.add('show');
+    setStatus('loading','ЗАГРУЗКА');
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode:'user', width:{ideal:1280}, height:{ideal:720} }, audio: false
+      });
+      video.srcObject = stream;
+      await new Promise(r => video.onloadedmetadata = r);
+
+      detector = await poseDetection.createDetector(
+        poseDetection.SupportedModels.MoveNet,
+        { modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING }
+      );
+
+      loading.classList.remove('show');
+      splash.classList.add('hidden');
+      video.classList.add('visible');
+      setStatus('active','ACTIVE');
+      btnFS.style.display = '';
+      btnDark.style.display = '';
+      loop();
+    } catch(e) {
+      loading.classList.remove('show');
+      btnStart.disabled = false;
+      showError('Ошибка: ' + (e.message || 'Нет доступа к камере'));
+    }
+  });
+
+  function resizeCanvas() {
+    canvas.width  = visionArea.clientWidth;
+    canvas.height = visionArea.clientHeight;
+  }
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+
+  async function loop() {
+    resizeCanvas();
+    const now = performance.now();
+    frameCount++;
+    if (now - lastTime >= 500) {
+      const fps = Math.round(frameCount * 1000 / (now - lastTime));
+      frameCount = 0; lastTime = now;
+      fpsVal.textContent = fps;
+      fpsHud.textContent = fps;
+    }
+    if (video.readyState >= 2 && detector) {
+      try { drawFrame(await detector.estimatePoses(video)); } catch(e) {}
+    }
+    requestAnimationFrame(loop);
+  }
+
+  function drawFrame(poses) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (!poses || !poses.length) { kpCount.textContent = '0'; kpHud.textContent = '0'; return; }
+
+    const kps   = poses[0].keypoints;
+    const kpMap = {};
+    kps.forEach(k => kpMap[k.name] = k);
+
+    // cover-fit scaling (match CSS object-fit:cover + scaleX(-1))
+    const vW = video.videoWidth  || canvas.width;
+    const vH = video.videoHeight || canvas.height;
+    const cAR = canvas.width / canvas.height;
+    const vAR = vW / vH;
+    let drawW, drawH, offX=0, offY=0;
+    if (cAR > vAR) { drawW=canvas.width; drawH=canvas.width/vAR; offY=(canvas.height-drawH)/2; }
+    else           { drawH=canvas.height; drawW=canvas.height*vAR; offX=(canvas.width-drawW)/2; }
+    const sx = x => offX + x * (drawW / vW);
+    const sy = y => offY + y * (drawH / vH);
+
+    const T = 0.25; // confidence threshold
+
+    // ── HEAD CIRCLE ──
+    const nose      = kpMap['nose'];
+    const leftEar   = kpMap['left_ear'];
+    const rightEar  = kpMap['right_ear'];
+    const leftEye   = kpMap['left_eye'];
+    const rightEye  = kpMap['right_eye'];
+
+    const visHead = HEAD_KPS.map(n => kpMap[n]).filter(k => k && k.score >= T);
+    if (visHead.length >= 2) {
+      // Center: midpoint of ears if both visible, else nose, else average
+      let cx, cy;
+      if (leftEar && rightEar && leftEar.score>=T && rightEar.score>=T) {
+        cx = (sx(leftEar.x)+sx(rightEar.x))/2;
+        cy = (sy(leftEar.y)+sy(rightEar.y))/2;
+      } else if (nose && nose.score>=T) {
+        cx = sx(nose.x); cy = sy(nose.y);
+      } else {
+        let sumX=0, sumY=0;
+        visHead.forEach(k=>{sumX+=sx(k.x);sumY+=sy(k.y);});
+        cx=sumX/visHead.length; cy=sumY/visHead.length;
+      }
+
+      // Radius from ear-to-ear or bounding box
+      let radius;
+      if (leftEar && rightEar && leftEar.score>=T && rightEar.score>=T) {
+        const d = Math.hypot(sx(rightEar.x)-sx(leftEar.x), sy(rightEar.y)-sy(leftEar.y));
+        radius = Math.max(d * 0.72, 24);
+      } else {
+        let mnX=Infinity,mxX=-Infinity,mnY=Infinity,mxY=-Infinity;
+        visHead.forEach(k=>{mnX=Math.min(mnX,sx(k.x));mxX=Math.max(mxX,sx(k.x));mnY=Math.min(mnY,sy(k.y));mxY=Math.max(mxY,sy(k.y));});
+        radius = Math.max((mxX-mnX),(mxY-mnY))*0.65+14;
+      }
+
+      // Glow halo
+      const grad = ctx.createRadialGradient(cx,cy,radius*0.7, cx,cy,radius+12);
+      grad.addColorStop(0, 'rgba(0,207,255,0)');
+      grad.addColorStop(1, 'rgba(0,207,255,0.08)');
+      ctx.beginPath(); ctx.arc(cx,cy,radius+12,0,Math.PI*2);
+      ctx.fillStyle = grad; ctx.fill();
+
+      // Dashed circle
+      ctx.beginPath(); ctx.arc(cx,cy,radius,0,Math.PI*2);
+      ctx.strokeStyle = 'rgba(0,207,255,0.88)';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([7,5]); ctx.stroke(); ctx.setLineDash([]);
+
+      // Inner thin ring
+      ctx.beginPath(); ctx.arc(cx,cy,radius*0.82,0,Math.PI*2);
+      ctx.strokeStyle = 'rgba(0,207,255,0.18)';
+      ctx.lineWidth = 1; ctx.stroke();
+
+      // Center crosshair
+      const ch = 7;
+      ctx.strokeStyle = 'rgba(0,207,255,0.5)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(cx-ch,cy); ctx.lineTo(cx+ch,cy); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx,cy-ch); ctx.lineTo(cx,cy+ch); ctx.stroke();
+
+      // Label
+      ctx.save();
+      ctx.font = 'bold 9px "Share Tech Mono", monospace';
+      ctx.fillStyle = 'rgba(0,207,255,0.5)';
+      ctx.textAlign = 'center';
+      ctx.fillText('HEAD', cx, cy - radius - 6);
+      ctx.restore();
+    }
+
+    // ── SKELETON LINES ──
+    SKELETON.forEach(([a,b]) => {
+      const A=kpMap[a], B=kpMap[b];
+      if (!A||!B||A.score<T||B.score<T) return;
+      const x1=sx(A.x),y1=sy(A.y),x2=sx(B.x),y2=sy(B.y);
+      const alpha = Math.min((A.score+B.score)/2*1.5,1);
+
+      // glow pass
+      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
+      ctx.strokeStyle = getColor(a,alpha*0.2); ctx.lineWidth=10; ctx.lineCap='round'; ctx.stroke();
+      // core pass
+      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
+      ctx.strokeStyle = getColor(a,alpha); ctx.lineWidth=2; ctx.stroke();
+    });
+
+    // ── KEYPOINTS (body only) ──
+    let visible = 0;
+    kps.forEach(kp => {
+      const score = kp.score||0;
+      const bar = document.getElementById('bar-'+kp.name);
+      const sc  = document.getElementById('score-'+kp.name);
+      if (score < T) {
+        if(bar) bar.style.width='0%'; if(sc) sc.textContent='—'; return;
+      }
+      visible++;
+      if(bar) bar.style.width = Math.round(score*100)+'%';
+      if(sc)  sc.textContent  = Math.round(score*100)+'%';
+
+      if (HEAD_KPS.includes(kp.name)) return; // head drawn as circle
+
+      const x=sx(kp.x), y=sy(kp.y), c=getColor(kp.name);
+      ctx.beginPath(); ctx.arc(x,y,9,0,Math.PI*2); ctx.fillStyle=getColor(kp.name,0.12); ctx.fill();
+      ctx.beginPath(); ctx.arc(x,y,5,0,Math.PI*2); ctx.strokeStyle=c; ctx.lineWidth=1.5; ctx.stroke();
+      ctx.beginPath(); ctx.arc(x,y,2.5,0,Math.PI*2); ctx.fillStyle=c; ctx.fill();
+    });
+
+    kpCount.textContent = visible+'/'+kps.length;
+    kpHud.textContent   = visible+'/'+kps.length;
+  }
+}
+</script>
+</body>
+</html>
 
