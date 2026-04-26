@@ -1,0 +1,143 @@
+<!DOCTYPE html><html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ESP Skeleton (Webcam Demo)</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0b0f14;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }h1 {
+  font-size: 18px;
+  margin: 12px;
+  text-align: center;
+}
+
+.wrap {
+  position: relative;
+  width: 640px;
+  height: 480px;
+  max-width: 100%;
+}
+
+video, canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+}
+
+.note {
+  font-size: 12px;
+  opacity: 0.7;
+  margin: 10px;
+  text-align: center;
+  max-width: 600px;
+}
+
+button {
+  margin: 10px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  background: #2b6cff;
+  color: white;
+}
+
+  </style>
+</head>
+<body><h1>ESP-скелет (как в играх, но через камеру)</h1><button onclick="startCamera()">Включить камеру</button>
+
+<div class="wrap">
+  <video id="video" autoplay playsinline></video>
+  <canvas id="canvas"></canvas>
+</div><div class="note">
+  Демонстрация компьютерного зрения (pose estimation). 
+  Сайт не сохраняет видео и не отправляет данные.
+</div><script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"></script><script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter"></script><script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl"></script><script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection"></script><script>
+let detector, video, canvas, ctx;
+
+async function initModel() {
+  const model = poseDetection.SupportedModels.MoveNet;
+  detector = await poseDetection.createDetector(model, {
+    modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING
+  });
+}
+
+async function startCamera() {
+  video = document.getElementById("video");
+  canvas = document.getElementById("canvas");
+  ctx = canvas.getContext("2d");
+
+  canvas.width = 640;
+  canvas.height = 480;
+
+  const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+  video.srcObject = stream;
+
+  await initModel();
+
+  detectPose();
+}
+
+function drawKeypoints(keypoints) {
+  for (const k of keypoints) {
+    if (k.score > 0.4) {
+      ctx.beginPath();
+      ctx.arc(k.x, k.y, 5, 0, 2 * Math.PI);
+      ctx.fillStyle = "#00ff99";
+      ctx.fill();
+    }
+  }
+}
+
+function drawSkeleton(keypoints) {
+  const pairs = [
+    [5,7],[7,9],
+    [6,8],[8,10],
+    [5,6],[5,11],[6,12],
+    [11,12],[11,13],[13,15],
+    [12,14],[14,16]
+  ];
+
+  ctx.strokeStyle = "#2b6cff";
+  ctx.lineWidth = 2;
+
+  for (const [a,b] of pairs) {
+    const p1 = keypoints[a];
+    const p2 = keypoints[b];
+
+    if (p1 && p2 && p1.score > 0.4 && p2.score > 0.4) {
+      ctx.beginPath();
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
+      ctx.stroke();
+    }
+  }
+}
+
+async function detectPose() {
+  if (!detector) return;
+
+  const poses = await detector.estimatePoses(video);
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  if (poses.length > 0) {
+    const kp = poses[0].keypoints;
+    drawSkeleton(kp);
+    drawKeypoints(kp);
+  }
+
+  requestAnimationFrame(detectPose);
+}
+</script></body>
+</html>
