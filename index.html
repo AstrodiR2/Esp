@@ -16,6 +16,7 @@
     --esp-cyan: #00cfff;
     --esp-red: #ff3355;
     --esp-yellow: #ffdd00;
+    --esp-purple: #bf5fff;
     --border: rgba(0,207,255,0.15);
     --glow: 0 0 12px rgba(0,255,136,0.6);
   }
@@ -23,9 +24,8 @@
   html, body { height: 100%; background: var(--bg); color: var(--esp-cyan); font-family: 'Share Tech Mono', monospace; overflow: hidden; }
 
   body::after {
-    content: '';
-    position: fixed; inset: 0;
-    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.06) 2px, rgba(0,0,0,0.06) 4px);
+    content: ''; position: fixed; inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.05) 2px, rgba(0,0,0,0.05) 4px);
     pointer-events: none; z-index: 9999;
   }
 
@@ -33,23 +33,23 @@
 
   header {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 10px 20px; border-bottom: 1px solid var(--border);
-    background: var(--panel); flex-shrink: 0;
+    padding: 9px 18px; border-bottom: 1px solid var(--border);
+    background: var(--panel); flex-shrink: 0; gap: 10px;
   }
-  .logo { font-family: 'Orbitron', monospace; font-size: 1.1rem; font-weight: 900; letter-spacing: 4px; color: var(--esp-green); text-shadow: var(--glow); }
+  .logo { font-family: 'Orbitron', monospace; font-size: 1rem; font-weight: 900; letter-spacing: 4px; color: var(--esp-green); text-shadow: var(--glow); white-space: nowrap; }
   .logo span { color: var(--esp-cyan); }
-  .header-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
-  .header-meta { font-size: 0.65rem; color: rgba(0,207,255,0.45); letter-spacing: 2px; text-align: right; line-height: 1.6; margin-left: 8px; }
+  .header-right { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+  .header-meta { font-size: 0.6rem; color: rgba(0,207,255,0.45); letter-spacing: 2px; text-align: right; line-height: 1.6; margin-left: 6px; }
 
-  #status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #333; margin-right: 6px; vertical-align: middle; transition: background 0.3s, box-shadow 0.3s; }
+  #status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #333; margin-right: 5px; vertical-align: middle; transition: background 0.3s, box-shadow 0.3s; }
   #status-dot.active  { background: var(--esp-green); box-shadow: var(--glow); animation: pulse 1.4s infinite; }
   #status-dot.loading { background: var(--esp-yellow); box-shadow: 0 0 10px rgba(255,220,0,0.7); animation: pulse 0.6s infinite; }
   #status-dot.error   { background: var(--esp-red); box-shadow: 0 0 10px rgba(255,51,85,0.7); }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
   .tool-btn {
-    font-family: 'Share Tech Mono', monospace; font-size: 0.6rem; letter-spacing: 2px;
-    padding: 6px 12px; background: transparent; border: 1px solid var(--border);
+    font-family: 'Share Tech Mono', monospace; font-size: 0.58rem; letter-spacing: 1.5px;
+    padding: 5px 10px; background: transparent; border: 1px solid var(--border);
     color: rgba(0,207,255,0.6); cursor: pointer; transition: all 0.2s; white-space: nowrap;
   }
   .tool-btn:hover { border-color: var(--esp-cyan); color: var(--esp-cyan); }
@@ -58,8 +58,8 @@
   main { flex: 1; display: flex; overflow: hidden; }
 
   #vision-area {
-    flex: 1; position: relative; display: flex; align-items: center; justify-content: center;
-    background: #000; overflow: hidden;
+    flex: 1; position: relative; background: #000; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
   }
 
   #video {
@@ -74,98 +74,81 @@
     pointer-events: none; transform: scaleX(-1);
   }
 
-  .corner { position: absolute; width: 28px; height: 28px; border-color: var(--esp-cyan); border-style: solid; opacity: 0.6; z-index: 10; }
-  .corner.tl { top:12px;left:12px;border-width:2px 0 0 2px; }
-  .corner.tr { top:12px;right:12px;border-width:2px 2px 0 0; }
-  .corner.bl { bottom:12px;left:12px;border-width:0 0 2px 2px; }
-  .corner.br { bottom:12px;right:12px;border-width:0 2px 2px 0; }
+  .corner { position: absolute; width: 24px; height: 24px; border-color: var(--esp-cyan); border-style: solid; opacity: 0.5; z-index: 10; }
+  .corner.tl { top:10px;left:10px;border-width:2px 0 0 2px; }
+  .corner.tr { top:10px;right:10px;border-width:2px 2px 0 0; }
+  .corner.bl { bottom:10px;left:10px;border-width:0 0 2px 2px; }
+  .corner.br { bottom:10px;right:10px;border-width:0 2px 2px 0; }
 
   /* Fullscreen overlay controls */
-  #fs-controls {
-    position: absolute; top: 14px; right: 14px; z-index: 30;
-    display: none; flex-direction: column; gap: 8px; align-items: flex-end;
-  }
+  #fs-controls { position: absolute; top: 12px; right: 12px; z-index: 30; display: none; flex-direction: column; gap: 6px; align-items: flex-end; }
   #fs-controls.show { display: flex; }
-
-  .fs-btn {
-    width: 40px; height: 40px; background: rgba(0,0,0,0.75); cursor: pointer;
-    display: flex; align-items: center; justify-content: center; font-size: 1rem; transition: all 0.2s;
-  }
-  #btn-close-fs { border: 1px solid rgba(255,51,85,0.5); color: var(--esp-red); }
+  .fs-btn { width: 38px; height: 38px; background: rgba(0,0,0,0.8); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; transition: all 0.2s; border: 1px solid var(--border); }
+  #btn-close-fs { border-color: rgba(255,51,85,0.5); color: var(--esp-red); }
   #btn-close-fs:hover { background: rgba(255,51,85,0.2); border-color: var(--esp-red); }
-  #btn-dark-fs  { border: 1px solid var(--border); color: rgba(0,207,255,0.6); }
+  #btn-dark-fs { color: rgba(0,207,255,0.6); }
   #btn-dark-fs:hover { border-color: var(--esp-cyan); color: var(--esp-cyan); }
   #btn-dark-fs.active { border-color: var(--esp-green); color: var(--esp-green); background: rgba(0,255,136,0.1); }
 
-  /* HUD in fullscreen */
-  #hud { position: absolute; bottom: 16px; left: 16px; z-index: 30; display: none; flex-direction: column; gap: 10px; }
+  /* HUD */
+  #hud { position: absolute; bottom: 14px; left: 14px; z-index: 30; display: none; flex-direction: column; gap: 8px; }
   #hud.show { display: flex; }
-  .hud-stat { font-size: 0.6rem; letter-spacing: 2px; color: rgba(0,255,136,0.5); }
-  .hud-stat span { color: var(--esp-green); font-size: 0.85rem; }
+  .hud-stat { font-size: 0.58rem; letter-spacing: 2px; color: rgba(0,255,136,0.5); }
+  .hud-stat span { color: var(--esp-green); font-size: 0.8rem; }
 
   /* Splash */
-  #splash {
-    position: absolute; inset: 0; display: flex; flex-direction: column;
-    align-items: center; justify-content: center; gap: 28px; z-index: 20;
-    background: radial-gradient(ellipse at center, #041020 0%, #010509 100%); transition: opacity 0.6s;
-  }
+  #splash { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; z-index: 20; background: radial-gradient(ellipse at center, #041020 0%, #010509 100%); transition: opacity 0.6s; }
   #splash.hidden { opacity: 0; pointer-events: none; }
-
-  .splash-icon {
-    width: 90px; height: 90px; border: 2px solid var(--esp-cyan); border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    animation: glow-pulse 3s ease-in-out infinite;
-  }
+  .splash-icon { width: 88px; height: 88px; border: 2px solid var(--esp-cyan); border-radius: 50%; display: flex; align-items: center; justify-content: center; animation: glow-pulse 3s ease-in-out infinite; }
   @keyframes glow-pulse { 0%,100%{box-shadow:0 0 10px rgba(0,207,255,0.3)} 50%{box-shadow:0 0 30px rgba(0,207,255,0.5),0 0 60px rgba(0,207,255,0.15)} }
-  .splash-icon svg { width: 44px; height: 44px; }
-  .splash-title { font-family:'Orbitron',monospace; font-size:2rem; font-weight:900; letter-spacing:6px; color:var(--esp-green); text-shadow:var(--glow),0 0 40px rgba(0,255,136,0.3); }
-  .splash-sub { font-size:0.7rem; letter-spacing:3px; color:rgba(0,207,255,0.5); max-width:320px; text-align:center; line-height:1.8; }
+  .splash-icon svg { width: 42px; height: 42px; }
+  .splash-title { font-family:'Orbitron',monospace; font-size:1.8rem; font-weight:900; letter-spacing:6px; color:var(--esp-green); text-shadow:var(--glow),0 0 40px rgba(0,255,136,0.3); }
+  .splash-sub { font-size:0.68rem; letter-spacing:2.5px; color:rgba(0,207,255,0.5); max-width:340px; text-align:center; line-height:1.9; }
+  .splash-badges { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
+  .badge { font-size:0.55rem; letter-spacing:1.5px; padding:4px 10px; border:1px solid rgba(0,207,255,0.2); color:rgba(0,207,255,0.5); }
 
-  #btn-start {
-    font-family:'Orbitron',monospace; font-size:0.75rem; font-weight:700; letter-spacing:3px;
-    padding:14px 36px; background:transparent; border:1px solid var(--esp-green); color:var(--esp-green);
-    cursor:pointer; text-transform:uppercase; position:relative; overflow:hidden; transition:color 0.3s;
-  }
+  #btn-start { font-family:'Orbitron',monospace; font-size:0.72rem; font-weight:700; letter-spacing:3px; padding:13px 34px; background:transparent; border:1px solid var(--esp-green); color:var(--esp-green); cursor:pointer; text-transform:uppercase; position:relative; overflow:hidden; transition:color 0.3s; }
   #btn-start::before { content:''; position:absolute; inset:0; background:var(--esp-green); transform:translateX(-100%); transition:transform 0.3s ease; z-index:-1; }
   #btn-start:hover { color:#000; }
   #btn-start:hover::before { transform:translateX(0); }
   #btn-start:disabled { opacity:0.4; cursor:not-allowed; }
 
-  .privacy-note {
-    display:flex; align-items:center; gap:8px; font-size:0.6rem; color:rgba(0,207,255,0.4);
-    letter-spacing:1px; border:1px solid rgba(0,207,255,0.1); padding:8px 14px;
-    max-width:340px; text-align:center; line-height:1.7;
-  }
-  .privacy-note svg { flex-shrink:0; opacity:0.5; }
+  .privacy-note { display:flex; align-items:center; gap:8px; font-size:0.58rem; color:rgba(0,207,255,0.35); letter-spacing:1px; border:1px solid rgba(0,207,255,0.08); padding:7px 13px; max-width:340px; text-align:center; line-height:1.7; }
+  .privacy-note svg { flex-shrink:0; opacity:0.4; }
 
   /* Sidebar */
-  #sidebar { width:220px; flex-shrink:0; background:var(--panel); border-left:1px solid var(--border); display:flex; flex-direction:column; overflow:hidden; transition:width 0.3s; }
-  #sidebar.hidden-fs { width:0; }
+  #sidebar { width: 210px; flex-shrink: 0; background: var(--panel); border-left: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; transition: width 0.3s; }
+  #sidebar.hidden-fs { width: 0; }
 
-  .panel-label { font-size:0.55rem; letter-spacing:3px; color:rgba(0,207,255,0.35); padding:10px 14px 6px; border-bottom:1px solid var(--border); text-transform:uppercase; }
-  #stats-panel { padding:12px 14px; border-bottom:1px solid var(--border); }
-  .stat-row { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px; }
-  .stat-label { font-size:0.6rem; color:rgba(0,207,255,0.4); letter-spacing:1px; }
-  .stat-val { font-size:0.85rem; color:var(--esp-green); font-weight:bold; }
+  .panel-label { font-size:0.52rem; letter-spacing:3px; color:rgba(0,207,255,0.3); padding:9px 13px 5px; border-bottom:1px solid var(--border); text-transform:uppercase; white-space:nowrap; }
+  #stats-panel { padding:10px 13px; border-bottom:1px solid var(--border); }
+  .stat-row { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:5px; }
+  .stat-label { font-size:0.58rem; color:rgba(0,207,255,0.4); letter-spacing:1px; }
+  .stat-val { font-size:0.82rem; color:var(--esp-green); font-weight:bold; }
 
-  #conf-panel { padding:10px 14px; flex:1; overflow-y:auto; }
-  #conf-panel::-webkit-scrollbar { width:3px; }
-  #conf-panel::-webkit-scrollbar-thumb { background:var(--border); }
-  .kp-row { margin-bottom:7px; }
-  .kp-name { font-size:0.55rem; color:rgba(0,207,255,0.45); letter-spacing:1px; margin-bottom:2px; display:flex; justify-content:space-between; }
-  .kp-bar-bg { height:3px; background:rgba(0,207,255,0.08); border-radius:2px; overflow:hidden; }
-  .kp-bar { height:100%; border-radius:2px; transition:width 0.15s; }
+  #legend { padding: 8px 13px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 5px; }
+  .leg-row { display: flex; align-items: center; gap: 7px; font-size: 0.55rem; letter-spacing: 1px; color: rgba(0,207,255,0.45); }
+  .leg-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 
-  footer { padding:8px 20px; border-top:1px solid var(--border); font-size:0.55rem; color:rgba(0,207,255,0.25); letter-spacing:1px; display:flex; justify-content:space-between; flex-shrink:0; background:var(--panel); }
+  #conf-panel { padding: 8px 13px; flex: 1; overflow-y: auto; }
+  #conf-panel::-webkit-scrollbar { width: 3px; }
+  #conf-panel::-webkit-scrollbar-thumb { background: var(--border); }
+  .kp-row { margin-bottom: 6px; }
+  .kp-name { font-size:0.52rem; color:rgba(0,207,255,0.4); letter-spacing:1px; margin-bottom:2px; display:flex; justify-content:space-between; }
+  .kp-bar-bg { height:2px; background:rgba(0,207,255,0.07); border-radius:2px; overflow:hidden; }
+  .kp-bar { height:100%; border-radius:2px; transition:width 0.1s; }
 
-  #loading-overlay { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; background:rgba(0,0,0,0.85); z-index:15; opacity:0; pointer-events:none; transition:opacity 0.3s; }
+  footer { padding:7px 18px; border-top:1px solid var(--border); font-size:0.52rem; color:rgba(0,207,255,0.22); letter-spacing:1px; display:flex; justify-content:space-between; flex-shrink:0; background:var(--panel); }
+
+  #loading-overlay { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; background:rgba(0,0,0,0.88); z-index:15; opacity:0; pointer-events:none; transition:opacity 0.3s; }
   #loading-overlay.show { opacity:1; pointer-events:all; }
-  .spinner { width:48px; height:48px; border:2px solid rgba(0,207,255,0.1); border-top-color:var(--esp-cyan); border-radius:50%; animation:spin 0.8s linear infinite; }
+  .spinner { width:44px; height:44px; border:2px solid rgba(0,207,255,0.1); border-top-color:var(--esp-cyan); border-radius:50%; animation:spin 0.7s linear infinite; }
   @keyframes spin { to{transform:rotate(360deg)} }
-  .loading-text { font-size:0.65rem; letter-spacing:3px; color:var(--esp-cyan); animation:blink 1.2s step-end infinite; }
+  .loading-text { font-size:0.62rem; letter-spacing:3px; color:var(--esp-cyan); }
+  .loading-sub  { font-size:0.5rem; letter-spacing:2px; color:rgba(0,207,255,0.4); animation:blink 1.2s step-end infinite; }
   @keyframes blink { 50%{opacity:0} }
 
-  #error-msg { position:absolute; bottom:20px; left:50%; transform:translateX(-50%); background:rgba(255,51,85,0.12); border:1px solid rgba(255,51,85,0.4); color:var(--esp-red); font-size:0.65rem; letter-spacing:1px; padding:10px 20px; z-index:25; display:none; text-align:center; max-width:360px; }
+  #error-msg { position:absolute; bottom:18px; left:50%; transform:translateX(-50%); background:rgba(255,51,85,0.12); border:1px solid rgba(255,51,85,0.4); color:var(--esp-red); font-size:0.62rem; letter-spacing:1px; padding:9px 18px; z-index:25; display:none; text-align:center; max-width:380px; }
   #error-msg.show { display:block; }
 </style>
 </head>
@@ -174,112 +157,171 @@
   <header>
     <div class="logo">ESP<span>.</span>SKELETON</div>
     <div class="header-right">
-      <button class="tool-btn" id="btn-fullscreen" style="display:none">⛶ ПОЛНЫЙ ЭКРАН</button>
-      <button class="tool-btn" id="btn-darkmode" style="display:none">🌑 ТЁМНЫЙ РЕЖИМ</button>
+      <button class="tool-btn" id="btn-fullscreen" style="display:none">⛶ FULLSCREEN</button>
+      <button class="tool-btn" id="btn-darkmode"   style="display:none">🌑 DARK MODE</button>
       <div class="header-meta">
         <span id="status-dot"></span><span id="status-txt">OFFLINE</span><br>
-        POSE ESTIMATION v1.0
+        HOLISTIC + HANDS v2
       </div>
     </div>
   </header>
 
   <main>
     <div id="vision-area">
-      <div class="corner tl"></div>
-      <div class="corner tr"></div>
-      <div class="corner bl"></div>
-      <div class="corner br"></div>
+      <div class="corner tl"></div><div class="corner tr"></div>
+      <div class="corner bl"></div><div class="corner br"></div>
 
       <video id="video" autoplay muted playsinline></video>
       <canvas id="canvas"></canvas>
 
-      <!-- Fullscreen floating controls -->
       <div id="fs-controls">
-        <button class="fs-btn" id="btn-close-fs" title="Выйти">✕</button>
-        <button class="fs-btn" id="btn-dark-fs"  title="Тёмный режим">🌑</button>
+        <button class="fs-btn" id="btn-close-fs">✕</button>
+        <button class="fs-btn" id="btn-dark-fs">🌑</button>
       </div>
 
-      <!-- HUD -->
       <div id="hud">
         <div class="hud-stat">FPS <span id="fps-hud">—</span></div>
-        <div class="hud-stat">ТОЧКИ <span id="kp-hud">—</span></div>
+        <div class="hud-stat">ТЕЛО <span id="body-hud">—</span></div>
+        <div class="hud-stat">РУКИ <span id="hand-hud">—</span></div>
       </div>
 
-      <!-- Splash -->
       <div id="splash">
         <div class="splash-icon">
           <svg viewBox="0 0 44 44" fill="none" stroke="#00cfff" stroke-width="1.5">
-            <circle cx="22" cy="10" r="4"/>
-            <line x1="22" y1="14" x2="22" y2="26"/>
-            <line x1="22" y1="18" x2="14" y2="24"/>
-            <line x1="22" y1="18" x2="30" y2="24"/>
-            <line x1="22" y1="26" x2="16" y2="36"/>
-            <line x1="22" y1="26" x2="28" y2="36"/>
+            <circle cx="22" cy="9" r="3.5"/>
+            <line x1="22" y1="13" x2="22" y2="25"/>
+            <line x1="22" y1="17" x2="13" y2="23"/>
+            <line x1="22" y1="17" x2="31" y2="23"/>
+            <line x1="22" y1="25" x2="16" y2="36"/>
+            <line x1="22" y1="25" x2="28" y2="36"/>
+            <!-- fingers hint -->
+            <line x1="13" y1="23" x2="9"  y2="20" stroke-width="0.8" opacity="0.5"/>
+            <line x1="13" y1="23" x2="8"  y2="24" stroke-width="0.8" opacity="0.5"/>
+            <line x1="31" y1="23" x2="35" y2="20" stroke-width="0.8" opacity="0.5"/>
+            <line x1="31" y1="23" x2="36" y2="24" stroke-width="0.8" opacity="0.5"/>
           </svg>
         </div>
         <div class="splash-title">ESP SKELETON</div>
-        <div class="splash-sub">REAL-TIME POSE ESTIMATION<br>ЧЕРЕЗ КАМЕРУ УСТРОЙСТВА</div>
+        <div class="splash-sub">POSE + HANDS + FINGERS<br>REAL-TIME · BROWSER ONLY</div>
+        <div class="splash-badges">
+          <span class="badge">MOVENET BODY</span>
+          <span class="badge">MEDIAPIPE HANDS</span>
+          <span class="badge">42 LANDMARKS</span>
+        </div>
         <button id="btn-start">▶ ВКЛЮЧИТЬ КАМЕРУ</button>
         <div class="privacy-note">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
             <path d="M8 1L2 4v4c0 3.3 2.5 6.4 6 7 3.5-.6 6-3.7 6-7V4L8 1z"/>
           </svg>
-          Камера используется только локально. Данные не отправляются на серверы и не сохраняются.
+          Камера работает локально. Данные не покидают ваше устройство.
         </div>
       </div>
 
       <div id="loading-overlay">
         <div class="spinner"></div>
-        <div class="loading-text">ЗАГРУЗКА МОДЕЛИ...</div>
+        <div class="loading-text">ЗАГРУЗКА МОДЕЛЕЙ</div>
+        <div class="loading-sub" id="load-sub">ИНИЦИАЛИЗАЦИЯ...</div>
       </div>
 
       <div id="error-msg"></div>
     </div>
 
     <div id="sidebar">
-      <div class="panel-label">ДАННЫЕ // DATA</div>
+      <div class="panel-label">ДАННЫЕ // STATS</div>
       <div id="stats-panel">
         <div class="stat-row"><span class="stat-label">FPS</span><span class="stat-val" id="fps-val">—</span></div>
-        <div class="stat-row"><span class="stat-label">ТОЧКИ</span><span class="stat-val" id="kp-count">—</span></div>
-        <div class="stat-row"><span class="stat-label">МОДЕЛЬ</span><span class="stat-val" style="font-size:0.6rem;color:var(--esp-cyan)">MOVENET</span></div>
+        <div class="stat-row"><span class="stat-label">ТЕЛО</span><span class="stat-val" id="body-pts">—</span></div>
+        <div class="stat-row"><span class="stat-label">РУКИ</span><span class="stat-val" id="hand-pts">—</span></div>
+        <div class="stat-row"><span class="stat-label">ЗАДЕРЖКА</span><span class="stat-val" id="latency-val">—</span></div>
       </div>
-      <div class="panel-label">СУСТАВЫ // JOINTS</div>
+
+      <div class="panel-label">ЛЕГЕНДА // LEGEND</div>
+      <div id="legend">
+        <div class="leg-row"><div class="leg-dot" style="background:#00cfff;box-shadow:0 0 5px #00cfff"></div>ГОЛОВА</div>
+        <div class="leg-row"><div class="leg-dot" style="background:#00ff88;box-shadow:0 0 5px #00ff88"></div>ВЕРХ ТЕЛА</div>
+        <div class="leg-row"><div class="leg-dot" style="background:#ffdd00;box-shadow:0 0 5px #ffdd00"></div>НОГ И БЁДРА</div>
+        <div class="leg-row"><div class="leg-dot" style="background:#ff8800;box-shadow:0 0 5px #ff8800"></div>ПРАВАЯ РУКА</div>
+        <div class="leg-row"><div class="leg-dot" style="background:#bf5fff;box-shadow:0 0 5px #bf5fff"></div>ЛЕВАЯ РУКА</div>
+      </div>
+
+      <div class="panel-label">СУСТАВЫ // BODY</div>
       <div id="conf-panel"></div>
     </div>
   </main>
 
   <footer>
-    <span>ESP SKELETON DEMO — ТОЛЬКО ДЛЯ ОБРАЗОВАТЕЛЬНЫХ ЦЕЛЕЙ</span>
-    <span>NO DATA TRANSMITTED</span>
+    <span>ESP SKELETON DEMO — ОБРАЗОВАТЕЛЬНЫЕ ЦЕЛИ</span>
+    <span id="model-info">BODY+HANDS</span>
   </footer>
 </div>
 
 <script>
+// ─────────────────────────────────────────────
+//  CONSTANTS
+// ─────────────────────────────────────────────
+const HEAD_KPS   = ['nose','left_eye','right_eye','left_ear','right_ear'];
+const BODY_SKEL  = [
+  ['left_shoulder','right_shoulder'],
+  ['left_shoulder','left_elbow'],  ['right_shoulder','right_elbow'],
+  ['left_elbow','left_wrist'],     ['right_elbow','right_wrist'],
+  ['left_shoulder','left_hip'],    ['right_shoulder','right_hip'],
+  ['left_hip','right_hip'],
+  ['left_hip','left_knee'],        ['right_hip','right_knee'],
+  ['left_knee','left_ankle'],      ['right_knee','right_ankle'],
+];
+const KP_NAMES = {
+  nose:'НОС',left_eye:'ГЛАЗ Л',right_eye:'ГЛАЗ П',left_ear:'УХО Л',right_ear:'УХО П',
+  left_shoulder:'ПЛЕЧО Л',right_shoulder:'ПЛЕЧО П',left_elbow:'ЛОКОТЬ Л',right_elbow:'ЛОКОТЬ П',
+  left_wrist:'ЗАПЯСТЬЕ Л',right_wrist:'ЗАПЯСТЬЕ П',left_hip:'БЕДРО Л',right_hip:'БЕДРО П',
+  left_knee:'КОЛЕНО Л',right_knee:'КОЛЕНО П',left_ankle:'ЛОДЫЖКА Л',right_ankle:'ЛОДЫЖКА П',
+};
+// MediaPipe Hand 21-landmark connections
+const HAND_CONNECTIONS = [
+  [0,1],[1,2],[2,3],[3,4],         // thumb
+  [0,5],[5,6],[6,7],[7,8],         // index
+  [0,9],[9,10],[10,11],[11,12],    // middle
+  [0,13],[13,14],[14,15],[15,16],  // ring
+  [0,17],[17,18],[18,19],[19,20],  // pinky
+  [5,9],[9,13],[13,17],            // palm
+];
+// Finger tip indices
+const FINGERTIPS = [4,8,12,16,20];
+
+// ─────────────────────────────────────────────
+//  LOAD SCRIPTS
+// ─────────────────────────────────────────────
+async function loadScript(src) {
+  return new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = src; s.onload = res; s.onerror = rej;
+    document.head.appendChild(s);
+  });
+}
+
 (async () => {
-  const s1 = document.createElement('script');
-  s1.src = 'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js';
-  document.head.appendChild(s1);
-  await new Promise(r => s1.onload = r);
-
-  const s2 = document.createElement('script');
-  s2.src = 'https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection@2.1.3/dist/pose-detection.min.js';
-  document.head.appendChild(s2);
-  await new Promise(r => s2.onload = r);
-
+  const loadSub = document.getElementById('load-sub');
+  document.getElementById('loading-overlay').classList.add('show');
+  // We load dynamically after camera start, so just init
   init();
 })();
 
+// ─────────────────────────────────────────────
+//  MAIN
+// ─────────────────────────────────────────────
 function init() {
   const video      = document.getElementById('video');
   const canvas     = document.getElementById('canvas');
   const ctx        = canvas.getContext('2d');
   const splash     = document.getElementById('splash');
   const loading    = document.getElementById('loading-overlay');
+  const loadSub    = document.getElementById('load-sub');
   const btnStart   = document.getElementById('btn-start');
   const statusDot  = document.getElementById('status-dot');
   const statusTxt  = document.getElementById('status-txt');
   const fpsVal     = document.getElementById('fps-val');
-  const kpCount    = document.getElementById('kp-count');
+  const bodyPts    = document.getElementById('body-pts');
+  const handPts    = document.getElementById('hand-pts');
+  const latencyVal = document.getElementById('latency-val');
   const errMsg     = document.getElementById('error-msg');
   const confPanel  = document.getElementById('conf-panel');
   const sidebar    = document.getElementById('sidebar');
@@ -291,88 +333,61 @@ function init() {
   const fsControls = document.getElementById('fs-controls');
   const hud        = document.getElementById('hud');
   const fpsHud     = document.getElementById('fps-hud');
-  const kpHud      = document.getElementById('kp-hud');
+  const bodyHud    = document.getElementById('body-hud');
+  const handHud    = document.getElementById('hand-hud');
   const appHeader  = document.querySelector('header');
   const appFooter  = document.querySelector('footer');
 
+  loading.classList.remove('show');
+
   let isFullscreen = false;
   let isDark = false;
+  let bodyDetector = null;
+  let handDetector = null;
 
-  const KP_NAMES = {
-    nose:'НОС', left_eye:'ГЛАЗ Л', right_eye:'ГЛАЗ П',
-    left_ear:'УХО Л', right_ear:'УХО П',
-    left_shoulder:'ПЛЕЧО Л', right_shoulder:'ПЛЕЧО П',
-    left_elbow:'ЛОКОТЬ Л', right_elbow:'ЛОКОТЬ П',
-    left_wrist:'ЗАПЯСТЬЕ Л', right_wrist:'ЗАПЯСТЬЕ П',
-    left_hip:'БЕДРО Л', right_hip:'БЕДРО П',
-    left_knee:'КОЛЕНО Л', right_knee:'КОЛЕНО П',
-    left_ankle:'ЛОДЫЖКА Л', right_ankle:'ЛОДЫЖКА П',
-  };
+  // FPS tracking
+  let lastFpsTime = performance.now();
+  let frameCount = 0;
+  let currentFps = 0;
 
-  // Body skeleton only (no face lines — head drawn as circle)
-  const SKELETON = [
-    ['left_shoulder','right_shoulder'],
-    ['left_shoulder','left_elbow'],  ['right_shoulder','right_elbow'],
-    ['left_elbow','left_wrist'],     ['right_elbow','right_wrist'],
-    ['left_shoulder','left_hip'],    ['right_shoulder','right_hip'],
-    ['left_hip','right_hip'],
-    ['left_hip','left_knee'],        ['right_hip','right_knee'],
-    ['left_knee','left_ankle'],      ['right_knee','right_ankle'],
-  ];
+  // Smooth pose storage for interpolation
+  let prevBodyKps = null;
+  let prevHands   = [];
+  const LERP = 0.55; // smoothing factor (higher = more responsive)
 
-  const HEAD_KPS = ['nose','left_eye','right_eye','left_ear','right_ear'];
+  function setStatus(s, t) { statusDot.className = s; statusTxt.textContent = t; }
+  function showError(m) { errMsg.textContent = m; errMsg.classList.add('show'); setStatus('error','ОШИБКА'); }
 
-  function getColor(name, alpha=1) {
-    if (HEAD_KPS.includes(name)) return `rgba(0,207,255,${alpha})`;
-    if (name.includes('shoulder')||name.includes('elbow')||name.includes('wrist')) return `rgba(0,255,136,${alpha})`;
-    if (name.includes('hip')||name.includes('knee')||name.includes('ankle')) return `rgba(255,200,0,${alpha})`;
-    return `rgba(200,200,200,${alpha})`;
-  }
-
-  // Build sidebar
+  // Build sidebar body bars
   Object.keys(KP_NAMES).forEach(name => {
     const row = document.createElement('div');
     row.className = 'kp-row';
     row.innerHTML = `
       <div class="kp-name"><span>${KP_NAMES[name]}</span><span id="score-${name}">—</span></div>
-      <div class="kp-bar-bg"><div class="kp-bar" id="bar-${name}" style="width:0%;background:${getColor(name)}"></div></div>`;
+      <div class="kp-bar-bg"><div class="kp-bar" id="bar-${name}" style="width:0%;background:${getBodyColor(name)}"></div></div>`;
     confPanel.appendChild(row);
   });
-
-  function setStatus(s, t) { statusDot.className = s; statusTxt.textContent = t; }
-  function showError(m) { errMsg.textContent = m; errMsg.classList.add('show'); setStatus('error','ОШИБКА'); }
 
   // ── FULLSCREEN ──
   function enterFS() {
     isFullscreen = true;
     visionArea.style.cssText = 'position:fixed;inset:0;z-index:1000;width:100vw;height:100vh;';
-    appHeader.style.display = 'none';
-    appFooter.style.display = 'none';
-    sidebar.classList.add('hidden-fs');
-    fsControls.classList.add('show');
-    hud.classList.add('show');
-    btnFS.classList.add('active');
-    btnFS.textContent = '✕ ВЫЙТИ';
+    appHeader.style.display = 'none'; appFooter.style.display = 'none';
+    sidebar.classList.add('hidden-fs'); fsControls.classList.add('show'); hud.classList.add('show');
+    btnFS.classList.add('active'); btnFS.textContent = '✕ ВЫЙТИ';
   }
   function exitFS() {
     isFullscreen = false;
     visionArea.style.cssText = '';
-    appHeader.style.display = '';
-    appFooter.style.display = '';
-    sidebar.classList.remove('hidden-fs');
-    fsControls.classList.remove('show');
-    hud.classList.remove('show');
-    btnFS.classList.remove('active');
-    btnFS.textContent = '⛶ ПОЛНЫЙ ЭКРАН';
+    appHeader.style.display = ''; appFooter.style.display = '';
+    sidebar.classList.remove('hidden-fs'); fsControls.classList.remove('show'); hud.classList.remove('show');
+    btnFS.classList.remove('active'); btnFS.textContent = '⛶ FULLSCREEN';
   }
-
-  // ── DARK MODE ──
   function setDark(on) {
     isDark = on;
     video.classList.toggle('dark-mode', on);
-    btnDark.classList.toggle('active', on);
-    btnDarkFS.classList.toggle('active', on);
-    btnDark.textContent   = on ? '☀️ СВЕТЛЫЙ РЕЖИМ' : '🌑 ТЁМНЫЙ РЕЖИМ';
+    btnDark.classList.toggle('active', on); btnDarkFS.classList.toggle('active', on);
+    btnDark.textContent = on ? '☀️ LIGHT MODE' : '🌑 DARK MODE';
   }
 
   btnFS.addEventListener('click', () => isFullscreen ? exitFS() : enterFS());
@@ -381,24 +396,47 @@ function init() {
   btnDarkFS.addEventListener('click', () => setDark(!isDark));
   document.addEventListener('keydown', e => { if (e.key==='Escape' && isFullscreen) exitFS(); });
 
-  let detector = null;
-  let lastTime = performance.now();
-  let frameCount = 0;
-
+  // ── START ──
   btnStart.addEventListener('click', async () => {
     btnStart.disabled = true;
     loading.classList.add('show');
     setStatus('loading','ЗАГРУЗКА');
+
     try {
+      // Camera
+      loadSub.textContent = 'ЗАПРОС КАМЕРЫ...';
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode:'user', width:{ideal:1280}, height:{ideal:720} }, audio: false
       });
       video.srcObject = stream;
       await new Promise(r => video.onloadedmetadata = r);
 
-      detector = await poseDetection.createDetector(
+      // Load TF.js
+      loadSub.textContent = 'ЗАГРУЗКА TENSORFLOW...';
+      await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js');
+      await tf.setBackend('webgl');
+      await tf.ready();
+
+      // Load pose-detection
+      loadSub.textContent = 'ЗАГРУЗКА POSE DETECTION...';
+      await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection@2.1.3/dist/pose-detection.min.js');
+
+      // Load hand-pose-detection
+      loadSub.textContent = 'ЗАГРУЗКА HAND DETECTION...';
+      await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow-models/hand-pose-detection@2.0.1/dist/hand-pose-detection.min.js');
+
+      // Body model (MoveNet Lightning - fastest)
+      loadSub.textContent = 'ИНИЦИАЛИЗАЦИЯ BODY MODEL...';
+      bodyDetector = await poseDetection.createDetector(
         poseDetection.SupportedModels.MoveNet,
         { modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING }
+      );
+
+      // Hand model (MediaPipe Hands)
+      loadSub.textContent = 'ИНИЦИАЛИЗАЦИЯ HAND MODEL...';
+      handDetector = await handPoseDetection.createDetector(
+        handPoseDetection.SupportedModels.MediaPipeHands,
+        { runtime: 'tfjs', maxHands: 2, modelType: 'lite' }
       );
 
       loading.classList.remove('show');
@@ -407,14 +445,18 @@ function init() {
       setStatus('active','ACTIVE');
       btnFS.style.display = '';
       btnDark.style.display = '';
-      loop();
+      document.getElementById('model-info').textContent = 'MOVENET + MEDIAPIPE HANDS';
+
+      startLoop();
     } catch(e) {
       loading.classList.remove('show');
       btnStart.disabled = false;
-      showError('Ошибка: ' + (e.message || 'Нет доступа к камере'));
+      showError('Ошибка: ' + (e.message || 'Нет доступа'));
+      console.error(e);
     }
   });
 
+  // ── RESIZE ──
   function resizeCanvas() {
     canvas.width  = visionArea.clientWidth;
     canvas.height = visionArea.clientHeight;
@@ -422,31 +464,8 @@ function init() {
   window.addEventListener('resize', resizeCanvas);
   resizeCanvas();
 
-  async function loop() {
-    resizeCanvas();
-    const now = performance.now();
-    frameCount++;
-    if (now - lastTime >= 500) {
-      const fps = Math.round(frameCount * 1000 / (now - lastTime));
-      frameCount = 0; lastTime = now;
-      fpsVal.textContent = fps;
-      fpsHud.textContent = fps;
-    }
-    if (video.readyState >= 2 && detector) {
-      try { drawFrame(await detector.estimatePoses(video)); } catch(e) {}
-    }
-    requestAnimationFrame(loop);
-  }
-
-  function drawFrame(poses) {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    if (!poses || !poses.length) { kpCount.textContent = '0'; kpHud.textContent = '0'; return; }
-
-    const kps   = poses[0].keypoints;
-    const kpMap = {};
-    kps.forEach(k => kpMap[k.name] = k);
-
-    // cover-fit scaling (match CSS object-fit:cover + scaleX(-1))
+  // ── SCALE HELPERS (cover-fit with mirror) ──
+  function makeScale() {
     const vW = video.videoWidth  || canvas.width;
     const vH = video.videoHeight || canvas.height;
     const cAR = canvas.width / canvas.height;
@@ -454,118 +473,269 @@ function init() {
     let drawW, drawH, offX=0, offY=0;
     if (cAR > vAR) { drawW=canvas.width; drawH=canvas.width/vAR; offY=(canvas.height-drawH)/2; }
     else           { drawH=canvas.height; drawW=canvas.height*vAR; offX=(canvas.width-drawW)/2; }
-    const sx = x => offX + x * (drawW / vW);
-    const sy = y => offY + y * (drawH / vH);
+    return {
+      x: v => offX + v * (drawW / vW),
+      y: v => offY + v * (drawH / vH),
+    };
+  }
 
-    const T = 0.25; // confidence threshold
+  // ── LERP for smoothing ──
+  function lerpKps(prev, curr, t) {
+    if (!prev || prev.length !== curr.length) return curr;
+    return curr.map((kp, i) => {
+      const p = prev[i];
+      if (!p) return kp;
+      return {
+        ...kp,
+        x: p.x + (kp.x - p.x) * t,
+        y: p.y + (kp.y - p.y) * t,
+      };
+    });
+  }
 
-    // ── HEAD CIRCLE ──
-    const nose      = kpMap['nose'];
-    const leftEar   = kpMap['left_ear'];
-    const rightEar  = kpMap['right_ear'];
-    const leftEye   = kpMap['left_eye'];
-    const rightEye  = kpMap['right_eye'];
+  function lerpHandLandmarks(prev, curr, t) {
+    if (!prev || prev.length !== curr.length) return curr;
+    return curr.map((pt, i) => {
+      const p = prev[i];
+      if (!p) return pt;
+      return { x: p.x+(pt.x-p.x)*t, y: p.y+(pt.y-p.y)*t, z: pt.z||0 };
+    });
+  }
 
-    const visHead = HEAD_KPS.map(n => kpMap[n]).filter(k => k && k.score >= T);
-    if (visHead.length >= 2) {
-      // Center: midpoint of ears if both visible, else nose, else average
-      let cx, cy;
-      if (leftEar && rightEar && leftEar.score>=T && rightEar.score>=T) {
-        cx = (sx(leftEar.x)+sx(rightEar.x))/2;
-        cy = (sy(leftEar.y)+sy(rightEar.y))/2;
-      } else if (nose && nose.score>=T) {
-        cx = sx(nose.x); cy = sy(nose.y);
-      } else {
-        let sumX=0, sumY=0;
-        visHead.forEach(k=>{sumX+=sx(k.x);sumY+=sy(k.y);});
-        cx=sumX/visHead.length; cy=sumY/visHead.length;
+  // ── COLOR HELPERS ──
+  function getBodyColor(name, alpha=1) {
+    if (HEAD_KPS.includes(name)) return `rgba(0,207,255,${alpha})`;
+    if (name.includes('shoulder')||name.includes('elbow')||name.includes('wrist')) return `rgba(0,255,136,${alpha})`;
+    if (name.includes('hip')||name.includes('knee')||name.includes('ankle')) return `rgba(255,221,0,${alpha})`;
+    return `rgba(200,200,200,${alpha})`;
+  }
+
+  function getHandColor(handedness, alpha=1) {
+    // handedness: "Left" or "Right" (from model's perspective, mirrored)
+    return handedness === 'Right'
+      ? `rgba(191,95,255,${alpha})`   // purple = left hand (mirror)
+      : `rgba(255,136,0,${alpha})`;   // orange = right hand (mirror)
+  }
+
+  // Per-finger color for fingertips
+  const FINGER_COLORS = ['rgba(255,80,80,1)','rgba(255,165,0,1)','rgba(255,255,0,1)','rgba(0,255,136,1)','rgba(0,180,255,1)'];
+
+  // ── DETECTION (run body and hands in parallel) ──
+  let bodyPoses = [];
+  let handPoses = [];
+  let isDetecting = false;
+
+  async function detect() {
+    if (!video || video.readyState < 2) return;
+    isDetecting = true;
+    const t0 = performance.now();
+    try {
+      const [bPoses, hPoses] = await Promise.all([
+        bodyDetector.estimatePoses(video, { flipHorizontal: false }),
+        handDetector.estimatePoses(video, { flipHorizontal: false }),
+      ]);
+      bodyPoses = bPoses;
+      handPoses = hPoses;
+      latencyVal.textContent = Math.round(performance.now()-t0) + 'ms';
+    } catch(e) {}
+    isDetecting = false;
+  }
+
+  // ── MAIN LOOP ──
+  // Detection runs independently at its own pace; draw runs every rAF for max smoothness
+  function startLoop() {
+    // Detection loop - as fast as possible
+    let detectTimeout;
+    async function detectLoop() {
+      await detect();
+      detectTimeout = setTimeout(detectLoop, 0); // no delay, but yields to browser
+    }
+    detectLoop();
+
+    // Draw loop - every animation frame (60 FPS target)
+    function drawLoop() {
+      resizeCanvas();
+
+      // FPS
+      frameCount++;
+      const now = performance.now();
+      if (now - lastFpsTime >= 500) {
+        currentFps = Math.round(frameCount * 1000 / (now - lastFpsTime));
+        frameCount = 0; lastFpsTime = now;
+        fpsVal.textContent = currentFps;
+        fpsHud.textContent = currentFps;
       }
 
-      // Radius from ear-to-ear or bounding box
-      let radius;
-      if (leftEar && rightEar && leftEar.score>=T && rightEar.score>=T) {
-        const d = Math.hypot(sx(rightEar.x)-sx(leftEar.x), sy(rightEar.y)-sy(leftEar.y));
-        radius = Math.max(d * 0.72, 24);
-      } else {
-        let mnX=Infinity,mxX=-Infinity,mnY=Infinity,mxY=-Infinity;
-        visHead.forEach(k=>{mnX=Math.min(mnX,sx(k.x));mxX=Math.max(mxX,sx(k.x));mnY=Math.min(mnY,sy(k.y));mxY=Math.max(mxY,sy(k.y));});
-        radius = Math.max((mxX-mnX),(mxY-mnY))*0.65+14;
-      }
+      drawFrame();
+      requestAnimationFrame(drawLoop);
+    }
+    requestAnimationFrame(drawLoop);
+  }
 
-      // Glow halo
-      const grad = ctx.createRadialGradient(cx,cy,radius*0.7, cx,cy,radius+12);
-      grad.addColorStop(0, 'rgba(0,207,255,0)');
-      grad.addColorStop(1, 'rgba(0,207,255,0.08)');
-      ctx.beginPath(); ctx.arc(cx,cy,radius+12,0,Math.PI*2);
-      ctx.fillStyle = grad; ctx.fill();
+  // ── DRAW ──
+  let smoothBodyKps = null;
+  let smoothHands   = {};
 
-      // Dashed circle
-      ctx.beginPath(); ctx.arc(cx,cy,radius,0,Math.PI*2);
-      ctx.strokeStyle = 'rgba(0,207,255,0.88)';
-      ctx.lineWidth = 2;
-      ctx.setLineDash([7,5]); ctx.stroke(); ctx.setLineDash([]);
+  function drawFrame() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const sc = makeScale();
 
-      // Inner thin ring
-      ctx.beginPath(); ctx.arc(cx,cy,radius*0.82,0,Math.PI*2);
-      ctx.strokeStyle = 'rgba(0,207,255,0.18)';
-      ctx.lineWidth = 1; ctx.stroke();
+    // ── BODY ──
+    if (bodyPoses && bodyPoses.length > 0) {
+      const pose = bodyPoses[0];
+      let kps = pose.keypoints;
 
-      // Center crosshair
-      const ch = 7;
-      ctx.strokeStyle = 'rgba(0,207,255,0.5)'; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(cx-ch,cy); ctx.lineTo(cx+ch,cy); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(cx,cy-ch); ctx.lineTo(cx,cy+ch); ctx.stroke();
+      // smooth
+      if (smoothBodyKps) kps = lerpKps(smoothBodyKps, kps, LERP);
+      smoothBodyKps = kps;
 
-      // Label
-      ctx.save();
-      ctx.font = 'bold 9px "Share Tech Mono", monospace';
-      ctx.fillStyle = 'rgba(0,207,255,0.5)';
-      ctx.textAlign = 'center';
-      ctx.fillText('HEAD', cx, cy - radius - 6);
-      ctx.restore();
+      const kpMap = {};
+      kps.forEach(k => kpMap[k.name] = k);
+      const T = 0.2;
+
+      // Head circle
+      const visHead = HEAD_KPS.map(n=>kpMap[n]).filter(k=>k&&k.score>=T);
+      if (visHead.length >= 2) drawHeadCircle(sc, kpMap, T);
+
+      // Body skeleton lines
+      BODY_SKEL.forEach(([a,b]) => {
+        const A=kpMap[a], B=kpMap[b];
+        if (!A||!B||A.score<T||B.score<T) return;
+        const alpha = Math.min((A.score+B.score)/2*1.6,1);
+        drawBone(sc.x(A.x),sc.y(A.y),sc.x(B.x),sc.y(B.y),getBodyColor(a,alpha),getBodyColor(a,alpha*0.18));
+      });
+
+      // Body keypoints (skip head)
+      let visCount = 0;
+      kps.forEach(kp => {
+        const s = kp.score||0;
+        const bar=document.getElementById('bar-'+kp.name), sc2=document.getElementById('score-'+kp.name);
+        if (s<T) { if(bar) bar.style.width='0%'; if(sc2) sc2.textContent='—'; return; }
+        visCount++;
+        if(bar) bar.style.width=Math.round(s*100)+'%';
+        if(sc2) sc2.textContent=Math.round(s*100)+'%';
+        if (HEAD_KPS.includes(kp.name)) return;
+        drawJoint(sc.x(kp.x),sc.y(kp.y),getBodyColor(kp.name));
+      });
+
+      bodyPts.textContent = visCount+'/'+kps.length;
+      bodyHud.textContent = visCount+'/'+kps.length;
     }
 
-    // ── SKELETON LINES ──
-    SKELETON.forEach(([a,b]) => {
-      const A=kpMap[a], B=kpMap[b];
-      if (!A||!B||A.score<T||B.score<T) return;
-      const x1=sx(A.x),y1=sy(A.y),x2=sx(B.x),y2=sy(B.y);
-      const alpha = Math.min((A.score+B.score)/2*1.5,1);
+    // ── HANDS ──
+    let totalHandPts = 0;
+    if (handPoses && handPoses.length > 0) {
+      handPoses.forEach(hand => {
+        const id   = hand.handedness + (hand.score||0); // per-hand key
+        let   lms  = hand.keypoints;
 
-      // glow pass
-      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
-      ctx.strokeStyle = getColor(a,alpha*0.2); ctx.lineWidth=10; ctx.lineCap='round'; ctx.stroke();
-      // core pass
-      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
-      ctx.strokeStyle = getColor(a,alpha); ctx.lineWidth=2; ctx.stroke();
-    });
+        // smooth per hand
+        if (smoothHands[hand.handedness]) {
+          lms = lerpHandLandmarks(smoothHands[hand.handedness], lms, LERP);
+        }
+        smoothHands[hand.handedness] = lms;
 
-    // ── KEYPOINTS (body only) ──
-    let visible = 0;
-    kps.forEach(kp => {
-      const score = kp.score||0;
-      const bar = document.getElementById('bar-'+kp.name);
-      const sc  = document.getElementById('score-'+kp.name);
-      if (score < T) {
-        if(bar) bar.style.width='0%'; if(sc) sc.textContent='—'; return;
-      }
-      visible++;
-      if(bar) bar.style.width = Math.round(score*100)+'%';
-      if(sc)  sc.textContent  = Math.round(score*100)+'%';
+        const color = getHandColor(hand.handedness);
+        totalHandPts += lms.length;
 
-      if (HEAD_KPS.includes(kp.name)) return; // head drawn as circle
+        // Palm / skeleton lines
+        HAND_CONNECTIONS.forEach(([i,j]) => {
+          const a=lms[i], b=lms[j]; if(!a||!b) return;
+          drawBone(sc.x(a.x),sc.y(a.y),sc.x(b.x),sc.y(b.y), color.replace('1)','0.85)'), color.replace('1)','0.12)'));
+        });
 
-      const x=sx(kp.x), y=sy(kp.y), c=getColor(kp.name);
-      ctx.beginPath(); ctx.arc(x,y,9,0,Math.PI*2); ctx.fillStyle=getColor(kp.name,0.12); ctx.fill();
-      ctx.beginPath(); ctx.arc(x,y,5,0,Math.PI*2); ctx.strokeStyle=c; ctx.lineWidth=1.5; ctx.stroke();
-      ctx.beginPath(); ctx.arc(x,y,2.5,0,Math.PI*2); ctx.fillStyle=c; ctx.fill();
-    });
+        // Knuckle dots
+        lms.forEach((pt, idx) => {
+          const x=sc.x(pt.x), y=sc.y(pt.y);
+          if (FINGERTIPS.includes(idx)) {
+            // Fingertip: colored bright dot + ring
+            const fc = FINGER_COLORS[FINGERTIPS.indexOf(idx)];
+            ctx.beginPath(); ctx.arc(x,y,7,0,Math.PI*2);
+            ctx.fillStyle = fc.replace('1)','0.12)'); ctx.fill();
+            ctx.beginPath(); ctx.arc(x,y,4,0,Math.PI*2);
+            ctx.strokeStyle = fc; ctx.lineWidth=1.5; ctx.stroke();
+            ctx.beginPath(); ctx.arc(x,y,1.8,0,Math.PI*2);
+            ctx.fillStyle = fc; ctx.fill();
+          } else if (idx === 0) {
+            // Wrist: bigger joint
+            ctx.beginPath(); ctx.arc(x,y,6,0,Math.PI*2);
+            ctx.fillStyle = color.replace('1)','0.15)'); ctx.fill();
+            ctx.beginPath(); ctx.arc(x,y,4,0,Math.PI*2);
+            ctx.strokeStyle = color; ctx.lineWidth=1.5; ctx.stroke();
+          } else {
+            // Regular knuckle
+            ctx.beginPath(); ctx.arc(x,y,2.5,0,Math.PI*2);
+            ctx.fillStyle = color.replace('1)','0.7)'); ctx.fill();
+          }
+        });
+      });
+    }
+    handPts.textContent = totalHandPts > 0 ? totalHandPts+'pts' : '—';
+    handHud.textContent = handPoses ? handPoses.length+'x' : '0x';
+  }
 
-    kpCount.textContent = visible+'/'+kps.length;
-    kpHud.textContent   = visible+'/'+kps.length;
+  // ── DRAW HELPERS ──
+  function drawBone(x1,y1,x2,y2,color,glow) {
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
+    ctx.strokeStyle=glow; ctx.lineWidth=9; ctx.lineCap='round'; ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
+    ctx.strokeStyle=color; ctx.lineWidth=1.8; ctx.stroke();
+  }
+
+  function drawJoint(x,y,color) {
+    ctx.beginPath(); ctx.arc(x,y,9,0,Math.PI*2);
+    ctx.fillStyle=color.replace('1)','0.11)'); ctx.fill();
+    ctx.beginPath(); ctx.arc(x,y,4.5,0,Math.PI*2);
+    ctx.strokeStyle=color; ctx.lineWidth=1.5; ctx.stroke();
+    ctx.beginPath(); ctx.arc(x,y,2,0,Math.PI*2);
+    ctx.fillStyle=color; ctx.fill();
+  }
+
+  function drawHeadCircle(sc, kpMap, T) {
+    const leftEar  = kpMap['left_ear'];
+    const rightEar = kpMap['right_ear'];
+    const nose     = kpMap['nose'];
+
+    let cx, cy;
+    if (leftEar&&rightEar&&leftEar.score>=T&&rightEar.score>=T) {
+      cx = (sc.x(leftEar.x)+sc.x(rightEar.x))/2;
+      cy = (sc.y(leftEar.y)+sc.y(rightEar.y))/2;
+    } else if (nose&&nose.score>=T) {
+      cx=sc.x(nose.x); cy=sc.y(nose.y);
+    } else return;
+
+    let radius = 30;
+    if (leftEar&&rightEar&&leftEar.score>=T&&rightEar.score>=T) {
+      const d = Math.hypot(sc.x(rightEar.x)-sc.x(leftEar.x), sc.y(rightEar.y)-sc.y(leftEar.y));
+      radius = Math.max(d*0.72, 22);
+    }
+
+    // Halo
+    const grad = ctx.createRadialGradient(cx,cy,radius*0.6,cx,cy,radius+14);
+    grad.addColorStop(0,'rgba(0,207,255,0)');
+    grad.addColorStop(1,'rgba(0,207,255,0.06)');
+    ctx.beginPath(); ctx.arc(cx,cy,radius+14,0,Math.PI*2);
+    ctx.fillStyle=grad; ctx.fill();
+
+    // Dashed circle
+    ctx.beginPath(); ctx.arc(cx,cy,radius,0,Math.PI*2);
+    ctx.strokeStyle='rgba(0,207,255,0.9)'; ctx.lineWidth=1.8;
+    ctx.setLineDash([6,4]); ctx.stroke(); ctx.setLineDash([]);
+
+    // Inner ring
+    ctx.beginPath(); ctx.arc(cx,cy,radius*0.78,0,Math.PI*2);
+    ctx.strokeStyle='rgba(0,207,255,0.15)'; ctx.lineWidth=1; ctx.stroke();
+
+    // Crosshair
+    ctx.strokeStyle='rgba(0,207,255,0.45)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(cx-7,cy); ctx.lineTo(cx+7,cy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx,cy-7); ctx.lineTo(cx,cy+7); ctx.stroke();
+
+    ctx.save(); ctx.font='bold 8px "Share Tech Mono",monospace';
+    ctx.fillStyle='rgba(0,207,255,0.45)'; ctx.textAlign='center';
+    ctx.fillText('HEAD',cx,cy-radius-5); ctx.restore();
   }
 }
 </script>
 </body>
 </html>
-
